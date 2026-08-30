@@ -2,7 +2,12 @@
 
 Parcial de la materia "Creación de Agentes de IA" — MADE N-2T, UCEMA, 2026 2T.
 
-**Integrantes:** Yanina Navarro, Eber Pires, Federico Serrizuela, Walter Perón.
+**Integrantes:**
+
+* Navarro, Yanina
+* Peron, Walter
+* Pires, Eber
+* Serrizuela, Federico
 
 ## Qué construí
 
