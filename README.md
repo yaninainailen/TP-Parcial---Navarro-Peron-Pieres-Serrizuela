@@ -1,6 +1,6 @@
 # El agente evaluador
 
-Parcial de la materia "Programación de y con Agentes de IA" — MBA UCEMA, 2026 2T.
+Parcial de la materia "Creación de Agentes de IA" — MADE N-2T, UCEMA, 2026 2T.
 
 **Integrantes:** Yanina Navarro, Eber Pires, Federico Serrizuela, Walter Perón.
 
