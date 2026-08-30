@@ -150,3 +150,9 @@ Se encontraron **dos desacuerdos reales**, no decorativos:
 
 Ambos ajustes quedaron documentados con el detalle completo (puntaje por dimensión, evidencia
 citada, antes/después) en `calibracion.md`.
+
+## 7 · README final
+
+Se reescribió el `README.md` de la raíz con el formato estándar de la materia (Qué construí / Cómo
+se lo pedí / Qué funciona / Qué falta o qué falló / Qué aprendí) y los integrantes, resumiendo el
+resultado real de la calibración en vez de una descripción genérica del proyecto.
