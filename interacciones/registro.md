@@ -120,3 +120,33 @@ construcción):
   no cierran con lo mostrado (costo total de 500 tickets menor al de una sola corrida real del
   caso excelente); `GOBIERNO.md` es texto genérico de compliance (ISO 27001, GDPR, SOC 2) que no
   tiene nada que ver con lo que el sistema realmente hace ni con cómo lo maneja.
+
+## 6 · Calibración: corriendo el agente de verdad sobre los 3 casos
+
+Tal como se acordó, la IA actuó como el agente corrector real: leyó `agente/system_prompt.md` +
+`rubrica.md` y los aplicó al pie de la letra sobre cada caso, sin decidir el resultado de antemano.
+El grupo (representado por la IA en esta sesión, ya que la definición del criterio humano se hizo
+*antes* de correr el agente, para que la comparación no fuera una racionalización posterior) fijó
+qué nota esperaba para cada caso antes de ver el resultado del agente.
+
+Se encontraron **dos desacuerdos reales**, no decorativos:
+
+1. **Caso flojo:** el agente dio 33/100 en la primera corrida; el grupo esperaba ~25-30. La causa
+   puntual: `rubrica.md` trataba "2 corridas en vez de 3" y "falta la fecha en una corrida" como
+   alternativas independientes que alcanzaban igual el nivel Bueno — pero el caso `flojo` tiene
+   **ambos** huecos a la vez, y la rúbrica no distinguía que combinarlos es más grave que tener uno
+   solo. Se ajustó `rubrica.md` (dimensión Formato y reproducibilidad, nivel Insuficiente) para que
+   dos o más huecos menores combinados bajen de nivel. Segunda corrida: 28/100 — coincide.
+
+2. **Caso tramposo:** el agente dio 28/100, un número **idéntico** al del caso flojo ya ajustado,
+   pese a ser un caso de mentira activa y no de simple incompletitud. El grupo marcó que esto no
+   cumple el objetivo del parcial ("el corrector tiene que detectar al tramposo"): un puntaje igual
+   al de un trabajo honestamente flojo no distingue nada si nadie repara en las señales de alerta.
+   Se ajustó `agente/system_prompt.md` para que, cuando la regla anti-trampa baje el nivel de 2 o
+   más dimensiones, el informe abra obligatoriamente con `⚠️ Posible caso de trabajo tramposo
+   detectado` — la detección pasa a estar en el informe, no en el número total. Segunda corrida:
+   mismo puntaje (28/100, porque el problema nunca fue el número), pero con la alerta obligatoria
+   presente — y ausente en el informe de `flojo`, que nunca mintió sobre nada.
+
+Ambos ajustes quedaron documentados con el detalle completo (puntaje por dimensión, evidencia
+citada, antes/después) en `calibracion.md`.

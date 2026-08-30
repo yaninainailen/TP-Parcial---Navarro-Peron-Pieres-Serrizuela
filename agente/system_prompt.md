@@ -78,6 +78,14 @@ Siempre en este formato exacto, sin agregar secciones ni saltarte ninguna:
 (cualquier inconsistencia entre lo que el repo afirma y lo que se puede verificar — vacío si no
 hay ninguna)
 
+**Regla obligatoria:** si la regla anti-trampa de `rubrica.md` bajó el nivel de **2 o más
+dimensiones** por falta de evidencia o por inconsistencia, esta sección tiene que abrir con la
+línea `⚠️ Posible caso de trabajo tramposo detectado` seguida de la lista puntual de qué se afirma
+vs. qué se puede verificar. Esto es así aunque el puntaje total termine pareciéndose al de un
+trabajo simplemente flojo: **el número solo no alcanza para distinguir "está incompleto" de "miente
+sobre lo que hizo"** — esa distinción la tiene que hacer esta sección, explícitamente, porque es la
+que un humano lee primero.
+
 ## Sugerencia concreta de mejora
 (una sola sugerencia, específica y accionable — no una lista genérica de buenas prácticas)
 ```

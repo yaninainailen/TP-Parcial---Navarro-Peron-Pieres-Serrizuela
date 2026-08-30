@@ -63,8 +63,8 @@ Evalúa si el repo respeta la estructura obligatoria y si un tercero puede recon
 | Nivel | Puntos | Evidencia que lo exige |
 |---|---|---|
 | Excelente | **15** | Existen `README.md`, `prompts/`, `corridas/`, `DECISIONES.md` exactamente como pide la consigna · hay **3 corridas**, cada una con entrada, salida y fecha, reconstruibles sin adivinar nada. |
-| Bueno | **10** | La estructura está pero con un hueco menor: falta la fecha en alguna corrida, o hay solo 2 corridas en vez de 3. |
-| Insuficiente | **5** | Falta alguna carpeta obligatoria, o las corridas no muestran entrada y salida completas. |
+| Bueno | **10** | La estructura está pero con **un solo** hueco menor: falta la fecha en alguna corrida, o hay solo 2 corridas en vez de 3 — no ambas cosas a la vez. |
+| Insuficiente | **5** | Falta alguna carpeta obligatoria, las corridas no muestran entrada y salida completas, **o se combinan dos o más huecos menores de la lista de "Bueno" al mismo tiempo** (ej. faltan corridas y además a las que hay les falta la fecha). Un hueco aislado es un descuido; varios huecos juntos ya son un problema de reproducibilidad real. |
 | Ausente | **0** | El repo no respeta la estructura obligatoria y no se puede navegar de forma predecible. |
 
 ## Dimensión 4 · Análisis económico — 15 puntos
