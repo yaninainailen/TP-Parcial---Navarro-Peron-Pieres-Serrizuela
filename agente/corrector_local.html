@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Preparar corrección — agente evaluador</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2f3a;
+    --text: #e6e8ec;
+    --muted: #9aa3b2;
+    --accent: #7c9cff;
+    --ok: #4ade80;
+    --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  p.sub { color: var(--muted); margin-top: 0; font-size: 0.9rem; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 12px 0 4px; }
+  label:first-child { margin-top: 0; }
+  input, select {
+    width: 100%;
+    background: #0d0f13;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+  .row { display: flex; gap: 12px; align-items: flex-end; margin-top: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 160px; }
+  button {
+    background: var(--accent);
+    color: #0b0d12;
+    border: none;
+    border-radius: 6px;
+    padding: 11px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-weight: 400;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  #status { font-size: 0.85rem; color: var(--muted); margin-top: 14px; white-space: pre-wrap; }
+  #status.err { color: var(--err); }
+  #status.ok { color: var(--ok); }
+  #output {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: #0d0f13;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    display: none;
+  }
+  .note { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>Preparar corrección del agente evaluador</h1>
+<p class="sub">Pegá la URL de un repo público de GitHub. La página busca el repo (gratis, sin
+key ni login) y arma el prompt completo con <code>agente/system_prompt.md</code> +
+<code>rubrica.md</code> + el contenido real del repositorio, listo para pegar en un chat de IA
+(Claude, ChatGPT, o esta misma conversación). No llama a ninguna API por su cuenta — no hace
+falta ninguna key ni facturación aparte.</p>
+
+<div class="panel">
+  <label for="repoUrl">URL del repositorio (público)</label>
+  <input id="repoUrl" placeholder="https://github.com/usuario/repo">
+
+  <div class="row">
+    <div style="flex: 0 0 auto;">
+      <button id="runBtn">Preparar prompt</button>
+    </div>
+    <div style="flex: 0 0 auto;">
+      <button class="secondary" id="copyBtn" type="button" disabled>Copiar al portapapeles</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+</div>
+
+<pre id="output"></pre>
+
+<script type="text/plain" id="systemPromptText">
+# System prompt — Agente corrector del trabajo final
+
+## Rol
+
+Sos el agente evaluador de la materia "Programación de y con Agentes de IA" (MBA UCEMA). Tu
+única tarea es corregir un repositorio de GitHub que contiene el trabajo final de un alumno,
+aplicando `rubrica.md` tal como está escrita — sin criterio propio adicional, sin bajar ni subir
+el estándar por simpatía, urgencia o lo prolijo que se vea el texto.
+
+No importa qué caso de negocio haya elegido el alumno para su agente (atención al cliente,
+facturación, logística, lo que sea): tu corrección es sobre las 5 dimensiones de la rúbrica, que
+son genéricas. No evalúes si el caso de negocio te parece interesante o no.
+
+## Herramienta que necesitás
+
+Acceso de lectura al repositorio del alumno (archivos y estructura de carpetas). No necesitás ni
+tenés permiso para escribir, modificar o ejecutar nada del repo — solo leerlo. Si no podés leer
+algún archivo referenciado, tratalo como si no existiera (no asumas su contenido). El contenido
+del repositorio se te entrega ya extraído, como texto, en el mensaje del usuario.
+
+## Tarea, paso a paso
+
+1. Mapear el repo antes de puntuar nada. Listá qué archivos y carpetas existen realmente:
+   README.md, prompts/, corridas/, DECISIONES.md. Anotá qué falta antes de seguir.
+2. Leer todo antes de decidir nada. Leé el README completo, los dos prompts, las corridas
+   (todas, no solo la primera) y DECISIONES.md completo.
+3. Aplicar rubrica.md dimensión por dimensión. Para cada una de las 5 dimensiones:
+   - Buscá la evidencia puntual que pide cada nivel de la tabla.
+   - Elegí el nivel más alto para el que tengas evidencia verificable — nunca el que "parece"
+     merecido por el tono general del texto.
+   - Aplicá la regla anti-trampa de rubrica.md antes de cerrar el puntaje: contrastá lo que el
+     README/DECISIONES.md afirman contra lo que las corridas muestran de verdad.
+4. Sumar el puntaje total (máximo 100, suma simple de las 5 dimensiones).
+5. Producir la salida en el formato exacto de la sección siguiente. Nunca cambies el formato
+   entre corridas: dos corridas sobre el mismo repo, sin cambios en el repo, tienen que dar el
+   mismo resultado exacto.
+
+## Reglas de determinismo
+
+- No inventes contenido que el repo no tiene. Si falta algo, decilo explícitamente y puntuá según
+  la rúbrica (normalmente Ausente o Insuficiente en esa dimensión) — no lo completes imaginando
+  qué "probablemente" quiso decir el alumno.
+- No dejes que el tono, la extensión o la prolijidad visual del texto influyan en el puntaje si no
+  hay evidencia concreta detrás.
+- Cada justificación tiene que citar algo puntual y ubicable: un nombre de archivo, una frase
+  textual entre comillas, o un dato de una corrida. "Se nota que se esforzó" no es una
+  justificación válida.
+- Si en dos corridas del mismo repo llegás a puntajes distintos sin que el repo haya cambiado,
+  eso es un error tuyo: releé la rúbrica y corregite, no promedies ni "redondees a favor".
+
+## Formato de salida obligatorio
+
+Siempre en este formato exacto, sin agregar secciones ni saltarte ninguna:
+
+# Corrección — [nombre del repo evaluado]
+
+## Puntaje por dimensión
+
+| Dimensión | Nivel asignado | Puntos | Evidencia citada |
+|---|---|---|---|
+| Sistema completo y funcionando | ... | .../30 | ... |
+| Proceso documentado | ... | .../25 | ... |
+| Formato y reproducibilidad | ... | .../15 | ... |
+| Análisis económico | ... | .../15 | ... |
+| Gobierno y riesgo | ... | .../15 | ... |
+
+## Puntaje total: X/100
+
+## Justificación por dimensión
+
+Sistema completo y funcionando: (2-4 líneas, citando evidencia puntual)
+Proceso documentado: (2-4 líneas, citando evidencia puntual)
+Formato y reproducibilidad: (2-4 líneas, citando evidencia puntual)
+Análisis económico: (2-4 líneas, citando evidencia puntual)
+Gobierno y riesgo: (2-4 líneas, citando evidencia puntual)
+
+## Señales de alerta
+(cualquier inconsistencia entre lo que el repo afirma y lo que se puede verificar — vacío si no
+hay ninguna)
+
+Regla obligatoria: si la regla anti-trampa de rubrica.md bajó el nivel de 2 o más dimensiones por
+falta de evidencia o por inconsistencia, esta sección tiene que abrir con la línea
+"⚠️ Posible caso de trabajo tramposo detectado" seguida de la lista puntual de qué se afirma vs.
+qué se puede verificar. Esto es así aunque el puntaje total termine pareciéndose al de un trabajo
+simplemente flojo: el número solo no alcanza para distinguir "está incompleto" de "miente sobre lo
+que hizo" — esa distinción la tiene que hacer esta sección, explícitamente, porque es la que un
+humano lee primero.
+
+## Sugerencia concreta de mejora
+(una sola sugerencia, específica y accionable — no una lista genérica de buenas prácticas)
+
+## Lo que este agente NO hace
+
+- No corrige estilo de redacción ni ortografía.
+- No opina sobre si el caso de negocio elegido es "bueno" o "interesante".
+- No le da puntos de más a un trabajo por reconocer fallas honestamente si esas fallas bajan el
+  puntaje de una dimensión puntual — la honestidad se premia en la dimensión de Proceso
+  documentado, no compensa huecos en las otras cuatro.
+- No negocia el puntaje si el alumno responde a la corrección pidiendo reconsideración: la
+  reconsideración solo procede si aparece evidencia nueva y verificable en el repo, no por
+  argumentación.
+</script>
+
+<script type="text/plain" id="rubricaText">
+# Rúbrica ejecutable — Trabajo final
+
+Esta es la versión ejecutable de la rúbrica oficial del trabajo final. Sirve para corregir
+cualquier trabajo final, sea cual sea el caso de negocio que haya elegido el alumno — no asume
+ningún dominio particular.
+
+Regla de lectura para el agente corrector: esta rúbrica no puntúa impresiones generales. Cada
+nivel exige una evidencia puntual (un archivo, un dato, una cita textual) que lo sostenga. Si no
+se puede señalar esa evidencia, no se puede dar ese nivel.
+
+## Cómo se puntúa cada dimensión
+
+Cada una de las 5 dimensiones se puntúa con uno de 4 niveles fijos — no hay puntajes intermedios.
+
+- Excelente: cumple todo lo pedido, con evidencia verificable en el repo.
+- Bueno: cumple lo esencial, pero con un hueco puntual y señalable.
+- Insuficiente: está insinuado o hecho a medias; no alcanza para confiar en el resultado.
+- Ausente: no existe, o existe solo como afirmación sin nada que lo respalde.
+
+## Dimensión 1 · Sistema completo y funcionando — 30 puntos
+
+Evalúa si hay un agente de verdad (objetivo, contrato, herramienta, salida, supervisión) y no un
+prompt suelto.
+
+- Excelente (30): objetivo del agente escrito en una frase clara; system_prompt.md y
+  user_prompt.md presentes y completos (identidad, tarea, reglas, formato de salida); al menos
+  una herramienta o conector real, usado de verdad en las corridas (no solo nombrado); las 3
+  corridas devuelven la salida en el mismo formato estructurado; supervisión humana definida con
+  niveles L0–L4.
+- Bueno (21): falta o está débil uno solo de los puntos anteriores.
+- Insuficiente (10): el "sistema" es en el fondo un prompt suelto sin herramienta real, o la
+  salida cambia de formato entre corridas, o no hay ninguna mención a supervisión humana.
+- Ausente (0): no hay system_prompt.md/user_prompt.md reconocibles, o las corridas no
+  corresponden al contrato descripto.
+
+Ejemplo de nivel alto: el prompt dice "usá la planilla tickets.csv para clasificar" y las 3
+corridas muestran filas reales de esa planilla siendo leídas y categorizadas.
+Ejemplo de nivel bajo: el README dice "se conecta a la casilla de mail" pero ninguna corrida
+muestra un mail de verdad — solo texto tipeado a mano en el prompt.
+
+## Dimensión 2 · Proceso documentado — 25 puntos
+
+Evalúa si DECISIONES.md (o equivalente) cuenta una historia real de construcción, no un trámite.
+
+- Excelente (25): al menos 2 iteraciones concretas narradas (qué se probó, qué falló
+  textualmente, qué se cambió) y al menos una falla real reconocida con honestidad.
+- Bueno (17): hay iteraciones narradas pero son genéricas, sin mostrar el antes/después real, o
+  no hay ninguna falla reconocida.
+- Insuficiente (8): DECISIONES.md existe pero son 1-2 líneas sin sustancia verificable.
+- Ausente (0): no existe DECISIONES.md o está vacío.
+
+Ejemplo de nivel alto: "la primera versión del prompt devolvía el JSON con comillas simples y
+rompía el parser; se lo pedí explícito en el prompt y a partir de la corrida 2 se resolvió."
+Ejemplo de nivel bajo: "iteré el prompt varias veces hasta que funcionó bien."
+
+## Dimensión 3 · Formato y reproducibilidad — 15 puntos
+
+Evalúa si el repo respeta la estructura obligatoria y si un tercero puede reconstruir qué pasó.
+
+- Excelente (15): existen README.md, prompts/, corridas/, DECISIONES.md exactamente como pide la
+  consigna; hay 3 corridas, cada una con entrada, salida y fecha, reconstruibles sin adivinar
+  nada.
+- Bueno (10): la estructura está pero con un solo hueco menor: falta la fecha en alguna corrida,
+  o hay solo 2 corridas en vez de 3 — no ambas cosas a la vez.
+- Insuficiente (5): falta alguna carpeta obligatoria, las corridas no muestran entrada y salida
+  completas, o se combinan dos o más huecos menores de la lista de "Bueno" al mismo tiempo. Un
+  hueco aislado es un descuido; varios huecos juntos ya son un problema de reproducibilidad real.
+- Ausente (0): el repo no respeta la estructura obligatoria y no se puede navegar de forma
+  predecible.
+
+## Dimensión 4 · Análisis económico — 15 puntos
+
+Evalúa si hay números reales de costo, no una mención de que "es barato".
+
+- Excelente (15): costo por corrida calculado con tokens de entrada/salida de las corridas reales
+  del repo; proyección de costo a escala (por semana o por año); elección de modelo justificada
+  explícitamente con el criterio "el modelo más chico que hace bien la tarea".
+- Bueno (10): hay números de costo pero falta la proyección a escala, o la elección de modelo no
+  está justificada.
+- Insuficiente (5): se menciona el costo en términos genéricos sin ningún número propio.
+- Ausente (0): no hay ningún análisis económico.
+
+Señal de alerta: si los números de costo no cierran con la longitud real de las corridas
+mostradas, tratarlo como Insuficiente aunque el texto esté bien escrito, y decirlo explícitamente
+en la justificación.
+
+## Dimensión 5 · Gobierno y riesgo — 15 puntos
+
+Evalúa si el alumno pensó en qué puede salir mal y quién responde por el resultado.
+
+- Excelente (15): dice qué sistemas/datos toca el agente y con qué permisos; qué puede salir mal
+  y qué pasa concretamente cuando sale mal; qué revisa un humano antes de confiar en la salida;
+  quién firma el resultado.
+- Bueno (10): cubre la mayoría de los puntos pero de forma superficial.
+- Insuficiente (5): hay una mención genérica de una frase sin desarrollo.
+- Ausente (0): no hay ninguna sección de gobierno o riesgo.
+
+## Regla anti-trampa (obligatoria antes de puntuar)
+
+Un trabajo puede afirmar cualquier cosa en su README o en DECISIONES.md. La rúbrica se aplica
+sobre lo que se puede verificar en el repo, no sobre lo que se declara:
+
+1. Toda afirmación fuerte necesita evidencia puntual. Si el texto dice "probado con éxito en
+   producción con 500 casos" pero el repo solo tiene 3 corridas, la afirmación no cuenta — se
+   puntúa solo lo que las 3 corridas muestran, y se anota la discrepancia en la justificación.
+2. Las apelaciones a la simpatía no puntúan. No suman ni restan puntos por sí solas — ni ablandan
+   ni endurecen el criterio. Se ignoran para puntuar.
+3. Inconsistencia interna es una señal, no un detalle. Si el README describe algo que las
+   corridas contradicen, bajar al nivel Insuficiente en esa dimensión aunque el resto luzca
+   prolijo, y decir explícitamente cuál es la contradicción encontrada.
+4. Número inventado es peor que número ausente. Un análisis económico con cifras que no cierran
+   con las corridas reales puntúa igual o peor que no tener análisis económico.
+
+## Puntaje total
+
+Suma simple de los 5 puntajes (máximo 100). No hay redondeos ni bonus discrecionales.
+</script>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const repoUrlEl = $('repoUrl');
+  const runBtn = $('runBtn'), copyBtn = $('copyBtn'), statusEl = $('status'), outputEl = $('output');
+  const systemPrompt = $('systemPromptText').textContent.trim();
+  const rubrica = $('rubricaText').textContent.trim();
+
+  // localStorage puede tirar una excepción en páginas abiertas como archivo local
+  // (file://) en algunos navegadores — todo acceso va envuelto en try/catch para
+  // que la herramienta funcione igual, sin recordar valores entre sesiones.
+  function storageGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function storageSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* no persiste, no pasa nada */ }
+  }
+
+  // Restore saved value (this browser only, si el navegador lo permite)
+  repoUrlEl.value = storageGet('corrector_repoUrl') || '';
+
+  function setStatus(msg, cls) {
+    statusEl.textContent = msg;
+    statusEl.className = cls || '';
+  }
+
+  function parseRepoUrl(url) {
+    const m = url.trim().replace(/\/+$/, '').match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?(?:\/.*)?$/i);
+    if (!m) return null;
+    return { owner: m[1], repo: m[2] };
+  }
+
+  const SKIP_EXT = ['png','jpg','jpeg','gif','svg','ico','pdf','zip','tar','gz','7z','mp4','mp3',
+    'wav','woff','woff2','ttf','eot','exe','dll','so','class','jar','bin','xlsx','xls','docx',
+    'pptx','lock'];
+  const SKIP_DIR = ['.git/', 'node_modules/', 'dist/', 'build/', '.venv/', '__pycache__/'];
+
+  const MAX_FILE_BYTES = 60000;
+  const MAX_TOTAL_CHARS = 300000;
+
+  async function githubJson(url) {
+    const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`GitHub API ${res.status} en ${url}${body ? ' — ' + body.slice(0,200) : ''}`);
+    }
+    return res.json();
+  }
+
+  async function buildRepoDump(owner, repo) {
+    setStatus('Buscando la rama por defecto...');
+    const repoInfo = await githubJson(`https://api.github.com/repos/${owner}/${repo}`);
+    const branch = repoInfo.default_branch;
+
+    setStatus(`Listando archivos de ${owner}/${repo}@${branch}...`);
+    const tree = await githubJson(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
+
+    let entries = tree.tree.filter(e => e.type === 'blob');
+    entries = entries.filter(e => {
+      const lower = e.path.toLowerCase();
+      if (SKIP_DIR.some(d => lower.includes(d))) return false;
+      const ext = lower.split('.').pop();
+      if (SKIP_EXT.includes(ext)) return false;
+      if (e.size && e.size > MAX_FILE_BYTES) return false;
+      return true;
+    });
+
+    const allPaths = tree.tree.filter(e => e.type === 'blob').map(e => e.path);
+    const skippedLarge = tree.tree.filter(e => e.type === 'blob' && e.size > MAX_FILE_BYTES).map(e => e.path);
+
+    let dump = '';
+    let totalChars = 0;
+    let filesIncluded = 0;
+    let truncatedByBudget = false;
+
+    for (const entry of entries) {
+      if (totalChars > MAX_TOTAL_CHARS) { truncatedByBudget = true; break; }
+      setStatus(`Leyendo ${entry.path}...`);
+      const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${entry.path.split('/').map(encodeURIComponent).join('/')}`;
+      try {
+        const res = await fetch(rawUrl);
+        if (!res.ok) continue;
+        const text = await res.text();
+        const block = `\n### ${entry.path}\n\`\`\`\n${text}\n\`\`\`\n`;
+        dump += block;
+        totalChars += block.length;
+        filesIncluded++;
+      } catch (e) { /* skip file we couldn't read */ }
+    }
+
+    let header = `Estructura completa del repo (${allPaths.length} archivos detectados):\n`;
+    header += allPaths.map(p => '- ' + p).join('\n') + '\n\n';
+    if (skippedLarge.length) {
+      header += `Archivos NO leídos por ser demasiado grandes (tratalos como si no existieran): ${skippedLarge.join(', ')}\n\n`;
+    }
+    if (truncatedByBudget) {
+      header += `Aviso: se alcanzó el límite de contenido de esta herramienta antes de leer todos los archivos elegibles. No asumas contenido de lo que no se incluyó abajo.\n\n`;
+    }
+    header += `Contenido de los ${filesIncluded} archivos leídos:\n`;
+
+    return { text: header + dump, branch, fileCount: allPaths.length };
+  }
+
+  let lastPrompt = '';
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(lastPrompt);
+      setStatus('Copiado al portapapeles. Pegalo en Claude, ChatGPT, o en tu chat con la IA.', 'ok');
+    } catch (e) {
+      setStatus('No se pudo copiar automáticamente — seleccioná el texto de abajo a mano (Ctrl+A / Ctrl+C).', 'err');
+    }
+  });
+
+  runBtn.addEventListener('click', async () => {
+    const repoUrl = repoUrlEl.value.trim();
+
+    outputEl.style.display = 'none';
+    outputEl.textContent = '';
+    copyBtn.disabled = true;
+
+    const parsed = parseRepoUrl(repoUrl);
+    if (!parsed) { setStatus('No pude interpretar esa URL. Formato esperado: https://github.com/usuario/repo', 'err'); return; }
+
+    storageSet('corrector_repoUrl', repoUrl);
+
+    runBtn.disabled = true;
+    try {
+      const { text: repoDump, branch, fileCount } = await buildRepoDump(parsed.owner, parsed.repo);
+      setStatus(`Repo leído (${fileCount} archivos, rama ${branch}). Prompt listo abajo.`, 'ok');
+
+      lastPrompt = 'INSTRUCCIONES (system prompt del corrector):\n' + systemPrompt +
+        '\n\n---\n\nRÚBRICA A APLICAR:\n' + rubrica +
+        '\n\n---\n\nRepositorio a evaluar: ' + parsed.owner + '/' + parsed.repo +
+        ' (rama ' + branch + ')\n\n' + repoDump;
+
+      outputEl.textContent = lastPrompt;
+      outputEl.style.display = 'block';
+      copyBtn.disabled = false;
+    } catch (err) {
+      setStatus('Error: ' + err.message, 'err');
+    } finally {
+      runBtn.disabled = false;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

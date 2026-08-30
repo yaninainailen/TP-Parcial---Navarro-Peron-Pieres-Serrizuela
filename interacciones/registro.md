@@ -151,7 +151,63 @@ Se encontraron **dos desacuerdos reales**, no decorativos:
 Ambos ajustes quedaron documentados con el detalle completo (puntaje por dimensión, evidencia
 citada, antes/después) en `calibracion.md`.
 
-## 7 · README final
+## 7 · Prueba real sobre repos que no construimos nosotros
+
+Walter pidió correr el corrector sobre dos repos reales de la Entrega 1 de la materia
+(`agentes-ia-ucema-ej1`, `agentes-ia-ucema-ej2`), no construidos por el grupo. Se clonaron y se
+aplicó la rúbrica al pie de la letra. Hallazgos:
+
+- Al leer `agentes-ia-ucema-ej2/dump_rcta.py` apareció un hostname interno real y un usuario real
+  hardcodeados en un repo público — se lo marcó a Walter como alerta de seguridad aparte de la
+  corrección (no es parte de la rúbrica, pero es información sensible expuesta).
+- Ambos repos son de la Entrega 1, no trabajos finales, así que puntuaron muy bajo — esperable,
+  no un problema del corrector, y se lo explicó así para no confundir "el corrector funciona mal"
+  con "el repo no es lo que la rúbrica espera".
+- Se encontró una ambigüedad real en `rubrica.md`: la dimensión "Proceso documentado" dice en su
+  encabezado "`DECISIONES.md` (o equivalente)" pero los 4 niveles solo hablan del archivo por
+  nombre. En `agentes-ia-ucema-ej2`, el contenido de proceso (excelente, con versiones de prompt
+  guardadas como archivos) está en el README en vez de en `DECISIONES.md`. Quedó pendiente decidir
+  si se ajusta la rúbrica para dejarlo explícito — no se tocó todavía, se lo dejó planteado.
+
+## 8 · Herramienta: corrector local en HTML
+
+Walter pidió una página que, con solo pegar la URL de un repo de GitHub, ejecute el corrector y
+devuelva la salida. Se aclaró una limitación real antes de construir nada: un Artifact publicado
+de claude.ai no puede llamar a GitHub (el sandbox de seguridad bloquea pedidos a hosts externos),
+así que tiene que ser un archivo HTML local, abierto directamente en el navegador.
+
+Se preguntó y decidió: (1) Walter tiene una API key y prefiere que la página llame al modelo
+automáticamente, en vez de solo armar el prompt para copiar a mano; (2) API de Anthropic; (3) solo
+repos públicos de GitHub (sin token de GitHub adicional).
+
+Primera versión de `agente/corrector_local.html`: un único archivo con el `system_prompt.md` y la
+`rubrica.md` embebidos, que busca el repo en la API de GitHub, lee sus archivos de texto (con
+límites de tamaño para no romper el contexto), arma el mensaje y llama directo a
+`api.anthropic.com` desde el navegador. La API key se guarda solo en el navegador del usuario
+(localStorage), nunca en el repo.
+
+**Bug real encontrado al probarlo (no simulado):** al abrir el archivo como `file://`, Chrome tira
+una excepción de seguridad al tocar `localStorage`, y como esa llamada estaba sin `try/catch`, el
+script entero se rompía en silencio antes de conectar el botón "Corregir" — el botón no hacía nada
+y no había ningún error visible en consola. Se probó en un navegador real (vía las herramientas de
+browser), se aisló la causa comparando qué parte del script sí se ejecutaba, y se corrigió
+envolviendo todo acceso a `localStorage` en funciones con try/catch (`storageGet/Set/Remove`) que
+no rompen la página si el navegador lo bloquea. Se volvió a probar el flujo completo (fetch real a
+GitHub + llamada real a la API de Anthropic con una key inválida a propósito) y se confirmó que
+llega de punta a punta.
+
+**Pedido de Walter, mid-construcción:** *"para tener la api key tengo que pagar aparte por uso? no
+podemos correrlo local? no hace falta q corra online"*. Aclaración: la API de Anthropic
+(`api.anthropic.com`) es un servicio pago por uso, facturado aparte de cualquier suscripción de
+Claude.ai — no es gratis solo por tener una cuenta. Y el archivo ya corría 100% local; lo único que
+salía del navegador era la llamada al modelo. Se rediseñó la herramienta para sacar esa llamada
+automática y la API key por completo: ahora solo busca el repo en GitHub (gratis, sin key) y arma
+el prompt completo en un `<textarea>` de solo lectura con un botón "Copiar al portapapeles", para
+pegarlo a mano en cualquier chat de IA (Claude, ChatGPT, o esta misma conversación) — sin key, sin
+facturación aparte, sin llamada automática a ningún lado. Se volvió a probar en el navegador contra
+`agentes-ia-ucema-ej1`: leyó el repo real y armó un prompt de 18.041 caracteres, listo para copiar.
+
+## 9 · README final
 
 Se reescribió el `README.md` de la raíz con el formato estándar de la materia (Qué construí / Cómo
 se lo pedí / Qué funciona / Qué falta o qué falló / Qué aprendí) y los integrantes, resumiendo el
