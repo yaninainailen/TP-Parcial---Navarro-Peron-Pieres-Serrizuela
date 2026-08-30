@@ -72,4 +72,25 @@ configuración global de git).
 
 ## 5 · Construcción de las piezas
 
-*(se completa a medida que se arma cada archivo)*
+**`rubrica.md`** — se tomaron las 5 dimensiones oficiales del trabajo final (Sistema completo 30,
+Proceso documentado 25, Formato y reproducibilidad 15, Análisis económico 15, Gobierno y riesgo
+15) y se les dio, para cada una, 4 niveles con **puntaje fijo** (no rangos), evidencia puntual
+exigida por nivel, un ejemplo de nivel alto y uno bajo, y una sección de reglas anti-trampa
+(afirmación sin evidencia no cuenta, apelaciones a la simpatía no puntúan, inconsistencia interna
+es señal de alerta, número inventado es peor que número ausente). Se usaron puntajes fijos en vez
+de rangos a propósito: un rango obliga al corrector a "elegir" un número dentro de él, lo cual
+introduce variación entre corridas — la consigna pide que la rúbrica se aplique igual dos veces.
+
+**`agente/system_prompt.md`** — define rol, la tarea paso a paso (mapear el repo → leer todo →
+aplicar la rúbrica dimensión por dimensión → sumar → producir salida), reglas de determinismo, y
+el formato de salida fijo (tabla de puntajes + justificación citando evidencia + señales de alerta
++ una sola sugerencia concreta). Se agregó explícitamente qué NO hace el agente (no corrige
+redacción, no opina del caso de negocio elegido, no negocia el puntaje sin evidencia nueva) para
+evitar que la corrección se desvíe con argumentación del alumno.
+
+**`agente/config.md`** — la "configuración" pedida por la consigna además del prompt: modelo
+recomendado (uno confiable siguiendo instrucciones, no necesariamente el más grande),
+**temperatura 0** (justificado explícitamente por el requisito de determinismo), qué entradas
+recibe, qué herramienta de lectura necesita, y los niveles de supervisión humana L0–L4 sobre el
+propio corrector (quién revisa su informe antes de que la nota se publique, y que el profesor
+arbitra desacuerdos).
