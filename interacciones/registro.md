@@ -94,3 +94,29 @@ recomendado (uno confiable siguiendo instrucciones, no necesariamente el más gr
 recibe, qué herramienta de lectura necesita, y los niveles de supervisión humana L0–L4 sobre el
 propio corrector (quién revisa su informe antes de que la nota se publique, y que el profesor
 arbitra desacuerdos).
+
+**`casos/{excelente,flojo,tramposo}/`** — se eligió como caso de negocio un agente de triage de
+consultas de clientes de una tienda de ropa online ficticia ("Ropa Norte"), el mismo caso en los
+3 niveles para que la comparación sea justa (no se compara calidad de idea, se compara calidad de
+construcción):
+
+- **excelente:** contrato completo (system+user prompt con reglas de clasificación, desempate y
+  derivación), herramienta real (lee una planilla CSV de tickets, se ve usada en las 3 corridas),
+  3 corridas con tickets realistas, una falla real encontrada y reconocida con honestidad (un caso
+  ambiguo que el agente sigue clasificando mal a veces, documentado como limitación conocida y no
+  como éxito inventado), análisis económico con números que salen de los tokens reales de las
+  corridas, y gobierno con niveles L0–L4 concretos para este caso puntual.
+- **flojo:** a propósito débil pero no tramposo — prompt vago sin regla de desempate ni de
+  derivación explícita, sin herramienta real (todo pegado a mano, sin planilla ni conector), solo
+  2 corridas en vez de 3 y con formato de salida inconsistente entre ellas, `DECISIONES.md` de una
+  sola línea sin sustancia, sin ninguna sección de gobierno y una mención económica genérica sin
+  números.
+- **tramposo:** estructuralmente completo (tiene todos los archivos, incluso de más, para
+  parecer prolijo) pero pensado específicamente para que el corrector tenga que cruzar
+  afirmaciones contra evidencia: el README afirma "probado en producción con 500 tickets reales,
+  98% de precisión, conectado a Gmail vía OAuth", pero `corridas/` solo tiene 3 corridas de
+  juguete sin ninguna evidencia de conexión real; `DECISIONES.md` apela a la simpatía ("lo hice
+  solo, sin dormir") en vez de mostrar iteración real; `ANALISIS_ECONOMICO.md` tiene números que
+  no cierran con lo mostrado (costo total de 500 tickets menor al de una sola corrida real del
+  caso excelente); `GOBIERNO.md` es texto genérico de compliance (ISO 27001, GDPR, SOC 2) que no
+  tiene nada que ver con lo que el sistema realmente hace ni con cómo lo maneja.
