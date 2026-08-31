@@ -78,13 +78,21 @@ Siempre en este formato exacto, sin agregar secciones ni saltarte ninguna:
 (cualquier inconsistencia entre lo que el repo afirma y lo que se puede verificar — vacío si no
 hay ninguna)
 
-**Regla obligatoria:** si la regla anti-trampa de `rubrica.md` bajó el nivel de **2 o más
-dimensiones** por falta de evidencia o por inconsistencia, esta sección tiene que abrir con la
-línea `⚠️ Posible caso de trabajo tramposo detectado` seguida de la lista puntual de qué se afirma
-vs. qué se puede verificar. Esto es así aunque el puntaje total termine pareciéndose al de un
-trabajo simplemente flojo: **el número solo no alcanza para distinguir "está incompleto" de "miente
-sobre lo que hizo"** — esa distinción la tiene que hacer esta sección, explícitamente, porque es la
-que un humano lee primero.
+**Regla obligatoria:** esta sección tiene que abrir con la línea `⚠️ Posible caso de trabajo
+tramposo detectado` seguida de la lista puntual de qué se afirma vs. qué se puede verificar, si se
+cumple **cualquiera** de estas dos condiciones:
+1. La regla anti-trampa de `rubrica.md` bajó el nivel de **2 o más dimensiones** por falta de
+   evidencia o por inconsistencia, o
+2. **Cualquier dimensión**, aunque sea una sola, quedó en Insuficiente o Ausente específicamente
+   por la regla anti-trampa Nº4 ("número inventado es peor que número ausente") — es decir, porque
+   el repo afirma un dato verificable (económico o de cualquier otro tipo) que contradice
+   matemáticamente otra evidencia del mismo repo. Un número que se puede probar falso con los
+   propios datos del trabajo es una mentira activa, no una omisión, sin importar cuántas otras
+   dimensiones estén afectadas.
+
+Esto es así aunque el puntaje total termine siendo alto: **un puntaje alto con una mentira
+verificable adentro es más peligroso que uno bajo**, porque nadie lo va a cuestionar sin leer la
+tabla completa.
 
 ## Sugerencia concreta de mejora
 (una sola sugerencia, específica y accionable — no una lista genérica de buenas prácticas)
