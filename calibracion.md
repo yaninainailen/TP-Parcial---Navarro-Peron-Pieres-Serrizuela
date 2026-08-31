@@ -202,3 +202,30 @@ particular para aplicar la rúbrica.
 de calidad diseñados a propósito. Esta prueba adicional muestra que, sobre un repo real y no
 preparado, el corrector no se rompe, produce el formato esperado, y su aplicación estricta de la
 rúbrica saca a la luz ambigüedades reales antes de la prueba de fuego.
+
+---
+
+## Stress test: caso "medio tramposo" (una sola dimensión fabricada)
+
+Los 3 casos oficiales y las pruebas contra repos reales confirman que el corrector distingue bien
+trabajos honestos de trabajos que mienten en casi todo. Faltaba probar el caso intermedio: ¿qué
+pasa si alguien miente en **una sola** dimensión, bien escondida, y el resto del trabajo es
+genuino? Se armó un caso de prueba en papel (no un repo completo, un ejercicio de calibración): 4
+de las 5 dimensiones excelentes y reales, y `ANALISIS_ECONOMICO.md` con un costo por corrida que no
+cierra contra los tokens reales mostrados en las corridas del mismo caso (10 veces más barato de lo
+que da la cuenta real).
+
+**Resultado con la regla original:** 85/100, sin alerta — la regla exigía 2+ dimensiones afectadas
+por la regla anti-trampa, y acá bajó una sola. Un puntaje alto con una mentira verificable adentro,
+sin ninguna señal visible arriba del informe.
+
+**Ajuste hecho:** se modificó la "Regla obligatoria" de `agente/system_prompt.md` para que la
+alerta también se dispare si una sola dimensión queda penalizada específicamente por la regla
+anti-trampa Nº4 (número que contradice matemáticamente otra evidencia del repo), sin importar
+cuántas otras dimensiones estén afectadas. Con el ajuste, el mismo caso da el mismo puntaje
+(85/100, el número no cambia) pero el informe abre con la alerta obligatoria.
+
+**Por qué importa:** el umbral de "2 o más dimensiones" protegía bien contra el tramposo que miente
+en todos lados (el caso oficial `tramposo`), pero no contra el que elige mentir en un solo lugar
+difícil de verificar a ojo. Este es el caso más peligroso para la prueba de fuego en vivo, porque un
+puntaje alto no genera la misma sospecha inmediata que uno bajo.
