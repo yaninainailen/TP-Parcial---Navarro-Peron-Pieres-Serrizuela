@@ -155,3 +155,50 @@ abre con la alerta obligatoria. **Coincide con lo esperado.**
 Dos ajustes reales quedaron hechos sobre la rúbrica y el corrector a partir de esta calibración:
 combinar huecos menores de formato baja de nivel (afecta a cualquier trabajo, no solo a este caso),
 y la detección de trampa tiene que ser explícita en el informe, no inferida del puntaje total.
+
+---
+
+## Prueba adicional: corriendo el corrector contra repos reales (no construidos por el grupo)
+
+Los 3 casos anteriores (`excelente`, `flojo`, `tramposo`) los construyó el propio grupo — prueban
+que el corrector distingue niveles de calidad diseñados a propósito para eso, no que funcione
+igual de bien sobre un trabajo real que nadie ajustó a la rúbrica. Para probar esto, se corrió el
+corrector (mismo `system_prompt.md` + `rubrica.md`, sin ningún cambio) sobre tres repos reales de
+la Entrega 1 de la materia (`agentes-ia-ucema-ej1`, `agentes-ia-ucema-ej2` y `Repo-Yanina-Navarro`),
+que no son trabajos finales.
+
+**Resultado esperado:** puntaje bajo en los tres, porque ninguno tiene la estructura que pide un
+trabajo final (no fueron pensados para eso). **Confirmado:** el corrector los puntuó bajo, de
+forma consistente, sin romperse ni devolver un formato distinto al esperado.
+
+**Hallazgo 1 — ambigüedad real en la rúbrica.** En `agentes-ia-ucema-ej2`, el contenido de proceso
+(versiones de prompt guardadas, decisiones de diseño) está en el `README.md`, no en un archivo
+`DECISIONES.md`. Esto expuso que la rúbrica decía "`DECISIONES.md` (o equivalente)" sin definir qué
+contaba como equivalente. **Ajuste hecho:** se agregó una aclaración en `rubrica.md` resolviendo
+esto de forma estricta, citando que la consigna del trabajo final exige "sin excepciones de
+formato" — no se ablandó el criterio pese a que el contenido de `agentes-ia-ucema-ej2` era, en
+calidad, bueno.
+
+**Hallazgo 2 — alerta de seguridad fuera de la rúbrica.** Al leer
+`agentes-ia-ucema-ej2/dump_rcta.py` apareció un hostname interno y un usuario reales hardcodeados
+en un archivo de un repositorio público. No es parte de ninguna dimensión de la rúbrica, pero se
+registra acá porque es el tipo de cosa que un corrector automatizado debería poder señalar aunque
+no le sume ni reste puntaje.
+
+**Repo 3 — `Repo-Yanina-Navarro` (Entrega 1, generador de copies para @barescopados).**
+Arquitectura distinta a los dos anteriores (HTML/CSS/JS + API de Gemini desde el navegador, sin
+Python). Puntaje: 20/100, sin señales de alerta.
+
+**Aclaración, no hallazgo nuevo:** los tres repos probados hasta acá (`ej1`, `ej2` y este) son de
+la Entrega 1 de la materia, que nunca pidió `DECISIONES.md` ni la estructura del trabajo final —
+por eso los tres puntúan bajo en Proceso documentado y Formato. Esto no es evidencia de una
+ambigüedad real en la rúbrica (ya la resolvimos en el hallazgo 1); es evidencia de que el corrector
+distingue correctamente "esto no es un trabajo final" de "esto es un trabajo final flojo" — que es
+un resultado distinto y también necesario de confirmar. Lo que sí prueba, con un stack de código
+totalmente distinto a los otros dos, es que el corrector no depende de un lenguaje o arquitectura
+particular para aplicar la rúbrica.
+
+**Por qué importa esta prueba:** los 3 casos oficiales prueban que el corrector distingue niveles
+de calidad diseñados a propósito. Esta prueba adicional muestra que, sobre un repo real y no
+preparado, el corrector no se rompe, produce el formato esperado, y su aplicación estricta de la
+rúbrica saca a la luz ambigüedades reales antes de la prueba de fuego.
