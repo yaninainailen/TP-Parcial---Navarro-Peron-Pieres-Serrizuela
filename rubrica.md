@@ -51,6 +51,16 @@ Evalúa si `DECISIONES.md` (o equivalente) cuenta una historia real de construcc
 | Insuficiente | **8** | `DECISIONES.md` existe pero son 1-2 líneas sin sustancia verificable. |
 | Ausente | **0** | No existe `DECISIONES.md` o está vacío. |
 
+**Aclaración sobre "(o equivalente)":** esta frase del encabezado se refiere solo a variantes
+razonables del nombre del mismo archivo (ej. `decisiones.md` en minúscula), no a que el contenido
+pueda estar en otro archivo distinto, como el `README.md`. La consigna del trabajo final es
+explícita: *"Sin excepciones de formato: el agente que te corrige no improvisa."* Por lo tanto, si
+la historia del proceso está bien contada pero vive en el `README.md` (o en cualquier archivo que
+no sea `DECISIONES.md`) y no existe un `DECISIONES.md` dedicado en la raíz del repo, esta dimensión
+se puntúa como **Ausente**, aunque el contenido narrado sea de buena calidad. El criterio es a
+propósito estricto: no premia dónde el alumno decidió poner cada cosa, premia que haya seguido la
+estructura pedida.
+
 **Ejemplo de nivel alto:** "la primera versión del prompt devolvía el JSON con comillas simples y
 rompía el parser; se lo pedí explícito en el prompt y a partir de la corrida 2 se resolvió — ver
 `corridas/corrida_1.md` vs `corrida_2.md`."
