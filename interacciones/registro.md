@@ -212,3 +212,89 @@ facturación aparte, sin llamada automática a ningún lado. Se volvió a probar
 Se reescribió el `README.md` de la raíz con el formato estándar de la materia (Qué construí / Cómo
 se lo pedí / Qué funciona / Qué falta o qué falló / Qué aprendí) y los integrantes, resumiendo el
 resultado real de la calibración en vez de una descripción genérica del proyecto.
+
+## 10 · Auditoría contra `parcial.md` y llamada automática a la API (Federico, 1/9)
+
+Federico pidió una auditoría completa del repo contra `parcial.md` — qué falta, qué sobra, qué
+mejorar — dejando elegir qué aplicar. Se encontraron y corrigieron con su aprobación: la rama de
+trabajo estaba desactualizada respecto de `origin/main` (se sincronizó), el caso `excelente` no
+tenía un archivo CSV real (solo texto pegado en los `.md`, lo mismo que se le criticaba a `flojo`/
+`tramposo` bajo la propia regla anti-trampa — se agregaron los 3 CSV reales), el `README.md` no
+mencionaba el stress test ni la prueba contra repos reales ya mergeados, y faltaba un runbook para
+la prueba de fuego — los tres se agregaron.
+
+Después pidió un cambio de fondo en `agente/corrector_local.html`: que la página, al cargar la URL
+del repo, llame directo a la API de Claude (en vez de solo armar el prompt para copiar a mano como
+quedó en la sección 8) y muestre el uso de tokens de cada corrida en el propio informe. Esto
+revierte parcialmente la decisión de la sección 8 (sacar la llamada automática por el tema de
+facturación) — ahora es opcional: se agregó un botón "Evaluar con Claude" que llama a
+`api.anthropic.com/v1/messages` desde el navegador (header
+`anthropic-dangerous-direct-browser-access`, necesario para que la API acepte pedidos hechos desde
+un origen de navegador) con la API key y el modelo que se elijan en la página (selector con Opus 5,
+Sonnet 5 y Haiku 4.5, precios de referencia a la vista), y al pie del informe agrega una tabla con
+tokens de entrada/salida y el costo estimado de esa corrida puntual. El botón "Preparar prompt"
+manual de la sección 8 se mantuvo intacto como alternativa sin key y sin costo. Se actualizó
+`agente/config.md` y el runbook del `README.md` para que describan las dos formas de correrlo.
+
+**Bug real encontrado al probarlo (no simulado):** Federico probó el botón "Evaluar con Claude"
+con su propia API key y la API devolvió 400: `anthropic-workspace-id is required when
+authenticating with an identity-linked API key; send the id of the workspace this request acts
+in.` Su key es de tipo "identity-linked" (personal, con acceso a varios workspaces de su cuenta),
+un caso que la primera versión del código no contemplaba — solo mandaba `x-api-key` +
+`anthropic-version`. Se agregó un campo "Workspace ID" en la página (persistido en `localStorage`
+igual que la key y el modelo) que, si se completa, se manda como header `anthropic-workspace-id`;
+con una key de workspace normal (no identity-linked) el campo se puede dejar vacío. También se
+mejoró el mensaje de error para que, si la API vuelve a responder ese 400 puntual, indique
+explícitamente qué campo completar en vez de mostrar solo el texto crudo de la API.
+
+## 11 · Sonda: la landing con 3 caminos y guardado automático (Federico, 2/9)
+
+Federico copió a `agente/` un mockup nuevo, `sonda_v0.2.html` — una landing con mejor diseño que
+ya tenía armados los 3 caminos de evaluación que pidió (un repo con API, un repo sin API con
+"Prompt Validador", y una lista de repos por CSV), pero solo como formulario: los botones
+simulaban con `setTimeout`, sin leer ningún repo ni llamar a ninguna API de verdad.
+
+Pidió: darle la lógica real de `corrector_local.html` a los 3 caminos, y que — solo para los
+caminos que usan la API — al terminar cada corrección se (1) muestre el resultado en la página, (2)
+se clasifique en excelente/flojo/tramposo, y (3) se cree `casos/<nivel>/<Creador del repo>/` con un
+`Correccion_de_<Creador>.md` y una copia de `corridas/`, `prompts/`, `ANALISIS_ECONOMICO.md`,
+`DECISIONES.md`, `GOBIERNO.md` y `README.md` del repo evaluado.
+
+**Restricción real encontrada antes de escribir nada:** una página HTML abierta con doble clic
+(`file://`) no puede crear carpetas ni escribir archivos en disco — es una limitación de seguridad
+del navegador, no algo evitable con más código. Se confirmó contra la documentación del navegador
+que la única API que lo permite (File System Access, `showDirectoryPicker`) exige un "contexto
+seguro" y no funciona en `file://`, solo en `http://localhost` o HTTPS.
+
+Con eso sobre la mesa, se le presentaron 3 decisiones a Federico antes de tocar código:
+
+1. **Cómo escribir a disco.** Elegido: servidor local + File System Access API (ej.
+   `python -m http.server`, abrir Sonda como `http://localhost:.../sonda_v0.2.html`; la primera vez
+   pide elegir la carpeta raíz del repo, un solo permiso, recordado después vía IndexedDB). Solo
+   funciona en Chrome/Edge — se descartó explícitamente un fallback de `.zip` para otros
+   navegadores.
+2. **Umbral excelente/flojo** (la rúbrica no lo fija — solo aplica niveles por dimensión, no un
+   corte del total). Elegido: `Puntaje total >= 70` → excelente, si no → flojo. La alerta
+   obligatoria de trampa manda siempre a `tramposo`, sin importar el número.
+3. **Dónde crear la carpeta.** Elegido: literal, dentro de `casos/<nivel>/<Creador>/`, a sabiendas
+   de que eso mezcla las evaluaciones de repos ajenos con los 3 casos de prueba propios del grupo
+   (se le ofreció una carpeta separada `evaluaciones/` para evitar esa mezcla, pero se prefirió lo
+   pedido originalmente).
+
+Se portaron a Sonda las funciones ya probadas de `corrector_local.html` (lectura del repo por la
+API de GitHub, armado del prompt, llamada a la API de Anthropic con el fix de
+`anthropic-workspace-id`, cálculo de uso de tokens) — con una diferencia: en vez de embeber
+`system_prompt.md` y `rubrica.md` como texto duplicado, Sonda los lee en vivo con `fetch()` desde
+sus rutas reales, aprovechando que de todos modos ahora se sirve por `http://localhost` — así no
+quedan dos copias que se puedan desincronizar. Se agregó la lógica nueva (acceso a la carpeta con
+permiso persistente, escritura de carpetas/archivos, clasificación del resultado, copia de las
+carpetas y archivos del repo evaluado) y se conectó a los 3 botones del mockup, que hasta ahora
+solo simulaban. El camino "Prompt Validador" (sin API) no clasifica ni guarda nada en disco,
+conforme a lo pedido. `agente/corrector_local.html` no se tocó — sigue siendo la versión simple,
+sin guardado a disco ni modo lote.
+
+**Limitación reconocida, no resuelta:** no hay forma de probar esto de punta a punta desde la
+sesión que lo construyó — no hay un navegador real ni una API key disponibles ahí. La validación
+hecha fue sintáctica (el script completo parsea sin errores) y de lectura del código; falta que el
+grupo lo pruebe de verdad en Chrome, con una key real, contra un repo público chico, antes de
+confiar en él para la prueba de fuego.

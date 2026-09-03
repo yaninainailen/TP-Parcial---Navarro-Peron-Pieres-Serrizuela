@@ -2,7 +2,7 @@
 
 ## Qué sistemas toca y con qué permisos
 El agente tiene acceso de **lectura únicamente** a la planilla compartida de tickets pendientes
-(`tickets_entrada.csv`, exportada del formulario de contacto de la web). No tiene acceso a la
+(`tickets_entrada_corridaN.csv`, exportada del formulario de contacto de la web). No tiene acceso a la
 casilla de mail real, ni a los sistemas de pago, ni a la base de clientes — solo a los datos que
 el equipo de atención le pega manualmente para procesar cada tanda.
 

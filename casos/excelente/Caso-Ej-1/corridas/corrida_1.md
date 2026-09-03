@@ -1,6 +1,8 @@
 # Corrida 1 — 2026-08-25
 
-## Entrada (`tickets_entrada.csv`)
+## Entrada (`tickets_entrada_corrida1.csv`)
+
+Archivo real en este mismo directorio: [`tickets_entrada_corrida1.csv`](tickets_entrada_corrida1.csv).
 
 ```csv
 id,cliente,mensaje

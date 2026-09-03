@@ -3,7 +3,9 @@
 Esta corrida expone la limitación conocida documentada en `DECISIONES.md` y en el README: el
 ticket 104 mezcla un pedido de cambio con un tono de reclamo, y el agente lo clasifica mal.
 
-## Entrada (`tickets_entrada.csv`)
+## Entrada (`tickets_entrada_corrida2.csv`)
+
+Archivo real en este mismo directorio: [`tickets_entrada_corrida2.csv`](tickets_entrada_corrida2.csv).
 
 ```csv
 id,cliente,mensaje

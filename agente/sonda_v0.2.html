@@ -1,0 +1,1552 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EF;
+    --surface:#FAFBF9;
+    --surface-2:#E5E9E5;
+    --text:#16211D;
+    --text-soft:#4C5C55;
+    --text-faint:#7C8A83;
+    --border:rgba(22,33,29,0.15);
+    --border-strong:rgba(22,33,29,0.28);
+    --accent:#B4692A;
+    --accent-strong:#8F5220;
+    --accent-contrast:#FFF6EC;
+    --accent-soft:rgba(180,105,42,0.12);
+    --success:#2E8F5B;
+    --success-soft:rgba(46,143,91,0.12);
+    --danger:#C6414F;
+    --danger-soft:rgba(198,65,79,0.12);
+    --focus:#B4692A;
+    --shadow:0 1px 2px rgba(15,23,20,0.07), 0 10px 28px rgba(15,23,20,0.06);
+    --font-display:'Fraunces', Georgia, serif;
+    --font-body:'Work Sans', 'Segoe UI', sans-serif;
+    --font-mono:'JetBrains Mono', 'Consolas', monospace;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#101714;
+      --surface:#17221D;
+      --surface-2:#1E2B25;
+      --text:#ECF2EE;
+      --text-soft:#A9B9B1;
+      --text-faint:#78897F;
+      --border:rgba(236,242,238,0.14);
+      --border-strong:rgba(236,242,238,0.26);
+      --accent:#E0913F;
+      --accent-strong:#F0A857;
+      --accent-contrast:#1C1006;
+      --accent-soft:rgba(224,145,63,0.16);
+      --success:#4FBE86;
+      --success-soft:rgba(79,190,134,0.16);
+      --danger:#E2707D;
+      --danger-soft:rgba(226,112,125,0.16);
+      --focus:#E0913F;
+      --shadow:0 1px 2px rgba(0,0,0,0.45), 0 14px 32px rgba(0,0,0,0.38);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101714;
+    --surface:#17221D;
+    --surface-2:#1E2B25;
+    --text:#ECF2EE;
+    --text-soft:#A9B9B1;
+    --text-faint:#78897F;
+    --border:rgba(236,242,238,0.14);
+    --border-strong:rgba(236,242,238,0.26);
+    --accent:#E0913F;
+    --accent-strong:#F0A857;
+    --accent-contrast:#1C1006;
+    --accent-soft:rgba(224,145,63,0.16);
+    --success:#4FBE86;
+    --success-soft:rgba(79,190,134,0.16);
+    --danger:#E2707D;
+    --danger-soft:rgba(226,112,125,0.16);
+    --focus:#E0913F;
+    --shadow:0 1px 2px rgba(0,0,0,0.45), 0 14px 32px rgba(0,0,0,0.38);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ color-scheme:light dark; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+
+  ::selection{ background:var(--accent-soft); color:var(--text); }
+
+  .shell{
+    max-width:920px;
+    margin:0 auto;
+    padding:2.5rem 1.5rem 5rem;
+  }
+
+  /* ---------- header ---------- */
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:3rem;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:0.65rem;
+  }
+  .brand-mark{
+    width:34px; height:34px;
+    border-radius:9px;
+    background:var(--accent);
+    color:var(--accent-contrast);
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .brand-mark svg{ width:18px; height:18px; }
+  .brand-name{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:1.25rem;
+    letter-spacing:-0.01em;
+  }
+  .version-badge{
+    font-family:var(--font-mono);
+    font-size:0.68rem;
+    color:var(--text-faint);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:0.15rem 0.5rem;
+    margin-left:0.35rem;
+  }
+  .status-pill{
+    display:flex; align-items:center; gap:0.45rem;
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    color:var(--text-soft);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .status-dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--success);
+    box-shadow:0 0 0 3px var(--success-soft);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .status-dot{ animation:none; }
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.45; }
+  }
+
+  /* ---------- hero ---------- */
+  .hero{ margin-bottom:2.75rem; max-width:640px; }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    letter-spacing:0.09em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 0.75rem;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:2.35rem;
+    line-height:1.12;
+    letter-spacing:-0.015em;
+    margin:0 0 0.85rem;
+    text-wrap:balance;
+  }
+  .hero p{
+    color:var(--text-soft);
+    font-size:1.02rem;
+    max-width:52ch;
+    margin:0;
+  }
+
+  /* ---------- breadcrumb ---------- */
+  .breadcrumb{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:0.4rem;
+    margin-bottom:1.5rem;
+    min-height:1.9rem;
+  }
+  .crumb{
+    font-family:var(--font-mono);
+    font-size:0.75rem;
+    padding:0.3rem 0.65rem;
+    border-radius:999px;
+    background:var(--surface-2);
+    color:var(--text-soft);
+    border:1px solid var(--border);
+  }
+  .crumb.is-current{
+    background:var(--accent-soft);
+    color:var(--accent-strong);
+    border-color:transparent;
+  }
+  .crumb-sep{ color:var(--text-faint); font-size:0.8rem; }
+  .btn-reset{
+    margin-left:auto;
+    background:none;
+    border:none;
+    font-family:var(--font-body);
+    font-size:0.82rem;
+    color:var(--text-faint);
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
+    padding:0.2rem 0;
+  }
+  .btn-reset:hover{ color:var(--text); }
+
+  /* ---------- step groups ---------- */
+  .step{
+    margin-bottom:1.75rem;
+  }
+  .step-label{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin:0 0 0.75rem;
+  }
+  .tiles{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0.9rem;
+  }
+  @media (max-width:620px){
+    .tiles{ grid-template-columns:1fr; }
+  }
+
+  .tile{
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap:0.6rem;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:1.15rem 1.25rem 1.3rem;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+    font-family:var(--font-body);
+    color:var(--text);
+  }
+  .tile:hover{ border-color:var(--border-strong); transform:translateY(-1px); }
+  .tile:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .tile.is-active{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .tile-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .tile-icon{
+    width:34px; height:34px;
+    border-radius:9px;
+    background:var(--surface-2);
+    color:var(--text-soft);
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .tile.is-active .tile-icon{
+    background:var(--accent);
+    color:var(--accent-contrast);
+  }
+  .tile-icon svg{ width:17px; height:17px; }
+  .tile-tag{
+    font-family:var(--font-mono);
+    font-size:0.68rem;
+    letter-spacing:0.05em;
+    color:var(--text-faint);
+  }
+  .tile-title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:1.08rem;
+    letter-spacing:-0.005em;
+  }
+  .tile-desc{
+    font-size:0.87rem;
+    color:var(--text-soft);
+    line-height:1.45;
+    margin:0;
+  }
+  .tile-check{
+    width:18px; height:18px;
+    border-radius:50%;
+    border:1.5px solid var(--border-strong);
+    flex:none;
+  }
+  .tile.is-active .tile-check{
+    border-color:var(--accent);
+    background:var(--accent);
+    position:relative;
+  }
+  .tile.is-active .tile-check::after{
+    content:"";
+    position:absolute;
+    left:5px; top:2px;
+    width:4px; height:8px;
+    border:solid var(--accent-contrast);
+    border-width:0 1.5px 1.5px 0;
+    transform:rotate(45deg);
+  }
+
+  /* ---------- panel (form) ---------- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:1.6rem 1.6rem 1.75rem;
+    box-shadow:var(--shadow);
+  }
+  .panel-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:1.4rem;
+    padding-bottom:1.1rem;
+    border-bottom:1px solid var(--border);
+  }
+  .panel-title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:1.2rem;
+  }
+  .panel-note{
+    font-size:0.82rem;
+    color:var(--text-faint);
+    text-align:right;
+  }
+
+  .field{
+    margin-bottom:1.15rem;
+  }
+  .field:last-of-type{ margin-bottom:0; }
+  .field-label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:0.83rem;
+    font-weight:600;
+    margin-bottom:0.4rem;
+  }
+  .field-status{
+    font-family:var(--font-mono);
+    font-size:0.68rem;
+    letter-spacing:0.03em;
+  }
+  .field-status.ok{ color:var(--success); }
+  .field-status.err{ color:var(--danger); }
+
+  input[type="text"], input[type="password"]{
+    width:100%;
+    font-family:var(--font-mono);
+    font-size:0.88rem;
+    padding:0.65rem 0.8rem;
+    border-radius:9px;
+    border:1px solid var(--border-strong);
+    background:var(--bg);
+    color:var(--text);
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input::placeholder{ color:var(--text-faint); font-family:var(--font-body); }
+  input:focus-visible{
+    outline:none;
+    border-color:var(--focus);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  input.is-valid{ border-color:var(--success); }
+  input.is-invalid{ border-color:var(--danger); }
+
+  .hint{
+    font-size:0.76rem;
+    color:var(--text-faint);
+    margin:0.35rem 0 0;
+    min-height:1.1em;
+  }
+  .hint-ok{ color:var(--success); }
+  .hint-err{ color:var(--danger); }
+
+  .file-drop{
+    display:flex;
+    align-items:center;
+    gap:0.85rem;
+    border:1.5px dashed var(--border-strong);
+    border-radius:10px;
+    padding:0.85rem 1rem;
+    cursor:pointer;
+    background:var(--bg);
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .file-drop:hover{ border-color:var(--accent); }
+  .file-drop.is-valid{ border-color:var(--success); border-style:solid; }
+  .file-drop.is-invalid{ border-color:var(--danger); border-style:solid; }
+  .file-drop-icon{
+    width:32px; height:32px; flex:none;
+    border-radius:8px;
+    background:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-soft);
+  }
+  .file-drop-icon svg{ width:16px; height:16px; }
+  .file-drop-text{ font-size:0.85rem; color:var(--text-soft); }
+  .file-drop-text strong{ color:var(--text); font-weight:600; }
+  input[type="file"]{ display:none; }
+
+  .actions{
+    display:flex;
+    gap:0.65rem;
+    margin-top:1.5rem;
+    flex-wrap:wrap;
+  }
+  button.btn{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:0.9rem;
+    padding:0.7rem 1.3rem;
+    border-radius:9px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:opacity 0.15s ease, transform 0.05s ease, background 0.15s ease;
+  }
+  button.btn:active{ transform:translateY(1px); }
+  button.btn-primary{
+    background:var(--accent);
+    color:var(--accent-contrast);
+  }
+  button.btn-primary:hover:not(:disabled){ background:var(--accent-strong); }
+  button.btn-secondary{
+    background:transparent;
+    color:var(--text);
+    border-color:var(--border-strong);
+  }
+  button.btn-secondary:hover:not(:disabled){ background:var(--surface-2); }
+  button.btn:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  .result{
+    margin-top:1.4rem;
+    padding-top:1.3rem;
+    border-top:1px solid var(--border);
+  }
+  .result-label{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:0.5rem;
+  }
+  .result-label span:first-child{
+    font-size:0.83rem; font-weight:600;
+  }
+  .copy-flag{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    color:var(--success);
+    opacity:0;
+    transition:opacity 0.2s ease;
+  }
+  .copy-flag.show{ opacity:1; }
+  textarea.prompt-box{
+    width:100%;
+    min-height:9.5rem;
+    font-family:var(--font-mono);
+    font-size:0.8rem;
+    line-height:1.55;
+    padding:0.85rem;
+    border-radius:9px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text-soft);
+    resize:vertical;
+  }
+  .result-hint{
+    font-size:0.78rem;
+    color:var(--text-faint);
+    margin:0.6rem 0 0;
+  }
+
+  footer{
+    margin-top:3.5rem;
+    padding-top:1.5rem;
+    border-top:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    font-size:0.78rem;
+    color:var(--text-faint);
+    font-family:var(--font-mono);
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"></path></svg>
+      </span>
+      <span class="brand-name" id="brandName"></span>
+      <span class="version-badge" id="versionBadgeHeader"></span>
+    </div>
+    <div class="status-pill"><span class="status-dot" aria-hidden="true"></span><span id="statusText"></span></div>
+  </header>
+
+  <div class="hero">
+    <p class="eyebrow" id="heroEyebrow"></p>
+    <h1 id="heroTitle"></h1>
+    <p id="heroSub"></p>
+  </div>
+
+  <div class="breadcrumb" id="breadcrumb" aria-live="polite"></div>
+
+  <section class="step" id="step1">
+    <p class="step-label" id="step1Label"></p>
+    <div class="tiles">
+      <button type="button" class="tile" id="tile-1a" data-path1="A">
+        <div class="tile-top">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l1.93-1.93a5 5 0 0 0-7.07-7.07L10.5 5.5"></path><path d="M14 11a5 5 0 0 0-7.07 0L5 12.93a5 5 0 0 0 7.07 7.07L13.5 18.5"></path></svg></span>
+          <span class="tile-check" aria-hidden="true"></span>
+        </div>
+        <span class="tile-tag" id="tile1aTag"></span>
+        <span class="tile-title" id="tile1aTitle"></span>
+        <p class="tile-desc" id="tile1aDesc"></p>
+      </button>
+      <button type="button" class="tile" id="tile-1b" data-path1="B">
+        <div class="tile-top">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01"></path></svg></span>
+          <span class="tile-check" aria-hidden="true"></span>
+        </div>
+        <span class="tile-tag" id="tile1bTag"></span>
+        <span class="tile-title" id="tile1bTitle"></span>
+        <p class="tile-desc" id="tile1bDesc"></p>
+      </button>
+    </div>
+  </section>
+
+  <section class="step" id="step2" hidden>
+    <p class="step-label" id="step2Label"></p>
+    <div class="tiles">
+      <button type="button" class="tile" id="tile-1aa" data-path2="A">
+        <div class="tile-top">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5zm-2 2l1.5 1.5"></path></svg></span>
+          <span class="tile-check" aria-hidden="true"></span>
+        </div>
+        <span class="tile-tag" id="tile1aaTag"></span>
+        <span class="tile-title" id="tile1aaTitle"></span>
+        <p class="tile-desc" id="tile1aaDesc"></p>
+      </button>
+      <button type="button" class="tile" id="tile-1ab" data-path2="B">
+        <div class="tile-top">
+          <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18"></path></svg></span>
+          <span class="tile-check" aria-hidden="true"></span>
+        </div>
+        <span class="tile-tag" id="tile1abTag"></span>
+        <span class="tile-title" id="tile1abTitle"></span>
+        <p class="tile-desc" id="tile1abDesc"></p>
+      </button>
+    </div>
+  </section>
+
+  <!-- Panel 1A-A: API de Claude, URL única -->
+  <section class="panel" id="panel-1aa" hidden>
+    <div class="panel-head">
+      <span class="panel-title" id="panelAATitle"></span>
+      <span class="panel-note" id="panelAANote"></span>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelAAUrl"></span><span class="field-status" id="status-aa-url"></span></div>
+      <input type="text" id="aa-url">
+      <p class="hint" id="hint-aa-url"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelAAName"></span><span class="field-status" id="status-aa-name"></span></div>
+      <input type="text" id="aa-name">
+      <p class="hint" id="hint-aa-name"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelAAKey"></span><span class="field-status" id="status-aa-key"></span></div>
+      <input type="password" id="aa-key">
+      <p class="hint" id="hint-aa-key"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelAAWs"></span><span class="field-status" id="status-aa-ws"></span></div>
+      <input type="text" id="aa-ws">
+      <p class="hint" id="hint-aa-ws"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelAAModel"></span></div>
+      <select id="aa-model">
+        <option value="claude-opus-5">Claude Opus 5 — $5 / $25 por MTok (in/out)</option>
+        <option value="claude-sonnet-5">Claude Sonnet 5 — $2 / $10 por MTok (in/out)</option>
+        <option value="claude-haiku-4-5">Claude Haiku 4.5 — $1 / $5 por MTok (in/out)</option>
+      </select>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="btn-aa" disabled></button>
+    </div>
+
+    <p class="result-hint" id="aa-status"></p>
+    <div class="result" id="aa-result" hidden>
+      <div class="result-label"><span id="aaResultLabel"></span></div>
+      <textarea class="prompt-box" id="aa-output" style="min-height:16rem" readonly></textarea>
+    </div>
+  </section>
+
+  <!-- Panel 1A-B: Prompt Validador, sin API -->
+  <section class="panel" id="panel-1ab" hidden>
+    <div class="panel-head">
+      <span class="panel-title" id="panelABTitle"></span>
+      <span class="panel-note" id="panelABNote"></span>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelABUrl"></span><span class="field-status" id="status-ab-url"></span></div>
+      <input type="text" id="ab-url">
+      <p class="hint" id="hint-ab-url"></p>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="btn-ab-create" disabled></button>
+      <button type="button" class="btn btn-secondary" id="btn-ab-copy" disabled></button>
+    </div>
+
+    <p class="result-hint" id="ab-status"></p>
+    <div class="result" id="ab-result" hidden>
+      <div class="result-label">
+        <span id="abResultLabel"></span>
+        <span class="copy-flag" id="ab-copy-flag"></span>
+      </div>
+      <textarea class="prompt-box" id="ab-prompt" readonly></textarea>
+      <p class="result-hint" id="abResultHint"></p>
+    </div>
+  </section>
+
+  <!-- Panel 1B: lista de direcciones -->
+  <section class="panel" id="panel-1b" hidden>
+    <div class="panel-head">
+      <span class="panel-title" id="panelBTitle"></span>
+      <span class="panel-note" id="panelBNote"></span>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelBFile"></span><span class="field-status" id="status-b-file"></span></div>
+      <div class="file-drop" id="b-filedrop" tabindex="0" role="button" aria-controls="b-file">
+        <span class="file-drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg></span>
+        <span class="file-drop-text" id="b-filedrop-text"></span>
+      </div>
+      <input type="file" id="b-file" accept=".csv,text/csv">
+      <p class="hint" id="hint-b-file"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelBKey"></span><span class="field-status" id="status-b-key"></span></div>
+      <input type="password" id="b-key">
+      <p class="hint" id="hint-b-key"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelBWs"></span><span class="field-status" id="status-b-ws"></span></div>
+      <input type="text" id="b-ws">
+      <p class="hint" id="hint-b-ws"></p>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span id="labelBModel"></span></div>
+      <select id="b-model">
+        <option value="claude-opus-5">Claude Opus 5 — $5 / $25 por MTok (in/out)</option>
+        <option value="claude-sonnet-5">Claude Sonnet 5 — $2 / $10 por MTok (in/out)</option>
+        <option value="claude-haiku-4-5">Claude Haiku 4.5 — $1 / $5 por MTok (in/out)</option>
+      </select>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="btn-b" disabled></button>
+    </div>
+
+    <p class="result-hint" id="b-status"></p>
+    <div class="result" id="b-result" hidden>
+      <div class="result-label"><span id="bResultLabel"></span></div>
+      <textarea class="prompt-box" id="b-output" style="min-height:16rem" readonly></textarea>
+    </div>
+  </section>
+
+  <footer>
+    <span id="footerLeft"></span>
+    <span id="footerVersion"></span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     TEXTOS DE LA PÁGINA
+     Editá los valores de este objeto para cambiar cualquier texto
+     visible (labels, botones, placeholders, mensajes de ayuda).
+     El resto del script solo lee de acá, no hace falta tocar nada
+     más abajo. Usá {{token}} donde el texto necesita un valor
+     dinámico (nombre de archivo, URL, cantidad de filas, etc.).
+     ============================================================ */
+  var TEXTS = {
+    brand: {
+      name: 'Sonda',
+      version: 'v0.2'
+    },
+    status: {
+      ready: 'Listo para analizar'
+    },
+    common: {
+      statusValid: 'válido',
+      statusInvalid: 'revisar',
+      errorUrl: 'Ingresá una URL completa, con http:// o https://',
+      errorName: 'Ingresá al menos 2 caracteres',
+      errorKey: 'La API Key parece incompleta',
+      errorWorkspace: 'El Workspace ID parece incompleto',
+      placeholderUrl: 'https://github.com/aliasname/job',
+      placeholderName: 'Ej: john doe',
+      placeholderKey: 'sk-ant-...',
+      placeholderWorkspace: 'wrkspc_...',
+      buttonBusy: 'Analizando…',
+      buttonDone: 'Listo ✓'
+    },
+    breadcrumb: {
+      prefix: 'Opción',
+      resetLabel: 'Empezar de nuevo'
+    },
+    hero: {
+      eyebrow: 'Agente Evaluador UCEMA',
+      start: {
+        title: 'Elegí cómo vas a analizar los repos',
+        sub: 'Trabajá con un unico repo a analizar o subí un listado completo de repos. Sonda arma el proceso completo según lo que necesites validar.'
+      },
+      chooseMethod: {
+        title: 'Una dirección, dos formas de validarla',
+        sub: 'Elegí si Sonda va a llamar directamente a la API de Claude o si preferís generar un prompt para pegar en un LLM externo.'
+      },
+      apiMode: {
+        title: 'Completá los datos de conexión',
+        sub: 'El botón se habilita cuando los cuatro campos son válidos.'
+      },
+      promptMode: {
+        title: 'Generá tu Prompt Validador',
+        sub: 'Cargá la dirección, creá el prompt y copialo para pegarlo en tu LLM externo de preferencia.'
+      },
+      listMode: {
+        title: 'Subí tu lista de direcciones',
+        sub: 'El CSV debe tener dos columnas: dirección web y nombre o titular del sitio.'
+      }
+    },
+    step1: {
+      label: 'Paso 1 · ¿Qué vas a analizar?',
+      tileA: {
+        tag: 'OPCIÓN 1A',
+        title: 'Un solo repo de GitHub',
+        desc: 'Cargá una única URL para analizar el repo en profundidad.'
+      },
+      tileB: {
+        tag: 'OPCIÓN 1B',
+        title: 'Una lista de repos de GitHub',
+        desc: 'Subí un CSV con muchas URLs de repos para procesarlos en lote.'
+      }
+    },
+    step2: {
+      label: 'Paso 2 · ¿Cómo querés validar esa dirección?',
+      tileAA: {
+        tag: 'OPCIÓN 1A-A',
+        title: 'Con API de Claude',
+        desc: 'Sonda llama a la API directamente con tus credenciales.'
+      },
+      tileAB: {
+        tag: 'OPCIÓN 1A-B',
+        title: 'Sin API · Prompt Validador',
+        desc: 'Generá un prompt para pegar en un LLM externo, sin usar la API.'
+      }
+    },
+    panelAA: {
+      title: 'Evaluacion de un unico repo con API de Claude',
+      note: 'Guarda el resultado automáticamente en casos/<nivel>/<creador>/',
+      labelUrl: 'Dirección del repo de GitHub',
+      labelName: 'Creador del repo',
+      labelKey: 'API Key de Claude',
+      labelWorkspace: 'Workspace ID',
+      labelModel: 'Modelo',
+      button: 'Analizar el repo',
+      resultLabel: 'Informe de corrección'
+    },
+    panelAB: {
+      title: 'Prompt Validador',
+      note: 'No usa la API — genera el prompt para pegar en otro chat',
+      labelUrl: 'Dirección del repo de GitHub',
+      buttonCreate: 'Crear Prompt Validador',
+      buttonCopy: 'Copiar al portapapeles',
+      resultLabel: 'Prompt generado',
+      copyFlag: 'Copiado ✓',
+      resultHint: 'Pegá este texto en tu LLM externo de preferencia para ejecutar la validación.'
+    },
+    panelB: {
+      title: 'Conexión con la API de Claude',
+      note: 'Procesa cada fila y guarda el resultado en casos/<nivel>/<creador>/',
+      labelFile: 'Archivo CSV ( [col #1: dirección del repo],[col #2: creador del repo] )',
+      labelKey: 'API Key de Claude',
+      labelWorkspace: 'Workspace ID',
+      labelModel: 'Modelo',
+      button: 'Analizar lista',
+      resultLabel: 'Resumen del lote',
+      dropDefault: '<strong>Elegí un archivo</strong> o arrastralo acá · .csv con 2 columnas',
+      dropInvalidExt: '<strong>{{name}}</strong> · formato no válido',
+      dropInvalidFormat: '<strong>{{name}}</strong> · formato inesperado',
+      dropValid: '<strong>{{name}}</strong> · {{rows}} direcciones',
+      errorExt: 'El archivo debe tener extensión .csv',
+      errorFormat: 'No se detectaron dos columnas válidas (dirección, nombre)',
+      hintRows: '{{rows}} fila(s) detectada(s)'
+    },
+    footer: {
+      left: 'Sonda · Frontend Agente Evaluador · TP UCEMA MBA 2026 ··· Grupo: Navarro-Peron-Pires-Serrizuela '
+    }
+  };
+
+  function fill(str, params){
+    return str.replace(/\{\{(\w+)\}\}/g, function(_, key){
+      return (params && params[key] !== undefined) ? params[key] : '';
+    });
+  }
+
+  function applyTexts(){
+    document.getElementById('brandName').textContent = TEXTS.brand.name;
+    document.getElementById('versionBadgeHeader').textContent = TEXTS.brand.version;
+    document.getElementById('footerVersion').textContent = TEXTS.brand.version;
+    document.getElementById('statusText').textContent = TEXTS.status.ready;
+    document.getElementById('footerLeft').textContent = TEXTS.footer.left;
+
+    document.getElementById('heroEyebrow').textContent = TEXTS.hero.eyebrow;
+
+    document.getElementById('step1Label').textContent = TEXTS.step1.label;
+    document.getElementById('tile1aTag').textContent = TEXTS.step1.tileA.tag;
+    document.getElementById('tile1aTitle').textContent = TEXTS.step1.tileA.title;
+    document.getElementById('tile1aDesc').textContent = TEXTS.step1.tileA.desc;
+    document.getElementById('tile1bTag').textContent = TEXTS.step1.tileB.tag;
+    document.getElementById('tile1bTitle').textContent = TEXTS.step1.tileB.title;
+    document.getElementById('tile1bDesc').textContent = TEXTS.step1.tileB.desc;
+
+    document.getElementById('step2Label').textContent = TEXTS.step2.label;
+    document.getElementById('tile1aaTag').textContent = TEXTS.step2.tileAA.tag;
+    document.getElementById('tile1aaTitle').textContent = TEXTS.step2.tileAA.title;
+    document.getElementById('tile1aaDesc').textContent = TEXTS.step2.tileAA.desc;
+    document.getElementById('tile1abTag').textContent = TEXTS.step2.tileAB.tag;
+    document.getElementById('tile1abTitle').textContent = TEXTS.step2.tileAB.title;
+    document.getElementById('tile1abDesc').textContent = TEXTS.step2.tileAB.desc;
+
+    document.getElementById('panelAATitle').textContent = TEXTS.panelAA.title;
+    document.getElementById('panelAANote').textContent = TEXTS.panelAA.note;
+    document.getElementById('labelAAUrl').textContent = TEXTS.panelAA.labelUrl;
+    document.getElementById('labelAAName').textContent = TEXTS.panelAA.labelName;
+    document.getElementById('labelAAKey').textContent = TEXTS.panelAA.labelKey;
+    document.getElementById('labelAAWs').textContent = TEXTS.panelAA.labelWorkspace;
+    document.getElementById('aa-url').placeholder = TEXTS.common.placeholderUrl;
+    document.getElementById('aa-name').placeholder = TEXTS.common.placeholderName;
+    document.getElementById('aa-key').placeholder = TEXTS.common.placeholderKey;
+    document.getElementById('aa-ws').placeholder = TEXTS.common.placeholderWorkspace;
+    document.getElementById('labelAAModel').textContent = TEXTS.panelAA.labelModel;
+    document.getElementById('btn-aa').textContent = TEXTS.panelAA.button;
+    document.getElementById('aaResultLabel').textContent = TEXTS.panelAA.resultLabel;
+
+    document.getElementById('panelABTitle').textContent = TEXTS.panelAB.title;
+    document.getElementById('panelABNote').textContent = TEXTS.panelAB.note;
+    document.getElementById('labelABUrl').textContent = TEXTS.panelAB.labelUrl;
+    document.getElementById('ab-url').placeholder = TEXTS.common.placeholderUrl;
+    document.getElementById('btn-ab-create').textContent = TEXTS.panelAB.buttonCreate;
+    document.getElementById('btn-ab-copy').textContent = TEXTS.panelAB.buttonCopy;
+    document.getElementById('abResultLabel').textContent = TEXTS.panelAB.resultLabel;
+    document.getElementById('ab-copy-flag').textContent = TEXTS.panelAB.copyFlag;
+    document.getElementById('abResultHint').textContent = TEXTS.panelAB.resultHint;
+
+    document.getElementById('panelBTitle').textContent = TEXTS.panelB.title;
+    document.getElementById('panelBNote').textContent = TEXTS.panelB.note;
+    document.getElementById('labelBFile').textContent = TEXTS.panelB.labelFile;
+    document.getElementById('labelBKey').textContent = TEXTS.panelB.labelKey;
+    document.getElementById('labelBWs').textContent = TEXTS.panelB.labelWorkspace;
+    document.getElementById('b-key').placeholder = TEXTS.common.placeholderKey;
+    document.getElementById('b-ws').placeholder = TEXTS.common.placeholderWorkspace;
+    document.getElementById('b-filedrop-text').innerHTML = TEXTS.panelB.dropDefault;
+    document.getElementById('labelBModel').textContent = TEXTS.panelB.labelModel;
+    document.getElementById('btn-b').textContent = TEXTS.panelB.button;
+    document.getElementById('bResultLabel').textContent = TEXTS.panelB.resultLabel;
+  }
+
+  var state = { path1: null, path2: null };
+
+  var el = {
+    breadcrumb: document.getElementById('breadcrumb'),
+    step2: document.getElementById('step2'),
+    tile1a: document.getElementById('tile-1a'),
+    tile1b: document.getElementById('tile-1b'),
+    tile1aa: document.getElementById('tile-1aa'),
+    tile1ab: document.getElementById('tile-1ab'),
+    panelAA: document.getElementById('panel-1aa'),
+    panelAB: document.getElementById('panel-1ab'),
+    panelB: document.getElementById('panel-1b'),
+    heroTitle: document.getElementById('heroTitle'),
+    heroSub: document.getElementById('heroSub')
+  };
+
+  function crumb(text, current){
+    var span = document.createElement('span');
+    span.className = 'crumb' + (current ? ' is-current' : '');
+    span.textContent = text;
+    return span;
+  }
+  function sep(){
+    var s = document.createElement('span');
+    s.className = 'crumb-sep';
+    s.textContent = '›';
+    return s;
+  }
+
+  function renderBreadcrumb(){
+    el.breadcrumb.innerHTML = '';
+    if(!state.path1){ return; }
+    var prefix = TEXTS.breadcrumb.prefix;
+    el.breadcrumb.appendChild(crumb(prefix + ' 1' + state.path1, state.path1 === 'B'));
+    if(state.path1 === 'A' && state.path2){
+      el.breadcrumb.appendChild(sep());
+      el.breadcrumb.appendChild(crumb(prefix + ' 1A-' + state.path2, true));
+    }
+    var resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'btn-reset';
+    resetBtn.textContent = TEXTS.breadcrumb.resetLabel;
+    resetBtn.addEventListener('click', reset);
+    el.breadcrumb.appendChild(resetBtn);
+  }
+
+  function render(){
+    el.tile1a.classList.toggle('is-active', state.path1 === 'A');
+    el.tile1b.classList.toggle('is-active', state.path1 === 'B');
+    el.step2.hidden = state.path1 !== 'A';
+    el.tile1aa.classList.toggle('is-active', state.path2 === 'A');
+    el.tile1ab.classList.toggle('is-active', state.path2 === 'B');
+
+    el.panelAA.hidden = !(state.path1 === 'A' && state.path2 === 'A');
+    el.panelAB.hidden = !(state.path1 === 'A' && state.path2 === 'B');
+    el.panelB.hidden = state.path1 !== 'B';
+
+    var h = TEXTS.hero.start;
+    if(state.path1 === 'A' && !state.path2){ h = TEXTS.hero.chooseMethod; }
+    else if(state.path1 === 'A' && state.path2 === 'A'){ h = TEXTS.hero.apiMode; }
+    else if(state.path1 === 'A' && state.path2 === 'B'){ h = TEXTS.hero.promptMode; }
+    else if(state.path1 === 'B'){ h = TEXTS.hero.listMode; }
+    el.heroTitle.textContent = h.title;
+    el.heroSub.textContent = h.sub;
+
+    renderBreadcrumb();
+  }
+
+  function reset(){
+    state.path1 = null;
+    state.path2 = null;
+    ['aa-url','aa-name','aa-key','aa-ws','ab-url','b-key','b-ws'].forEach(function(id){
+      var input = document.getElementById(id);
+      if(input){ input.value = ''; input.classList.remove('is-valid','is-invalid'); }
+    });
+    document.getElementById('b-file').value = '';
+    document.getElementById('b-filedrop').classList.remove('is-valid','is-invalid');
+    document.getElementById('b-filedrop-text').innerHTML = TEXTS.panelB.dropDefault;
+    ['hint-aa-url','hint-aa-name','hint-aa-key','hint-aa-ws','hint-ab-url','hint-b-file','hint-b-key','hint-b-ws'].forEach(function(id){
+      var hEl = document.getElementById(id); if(hEl){ hEl.textContent=''; hEl.className='hint'; }
+    });
+    ['status-aa-url','status-aa-name','status-aa-key','status-aa-ws','status-ab-url','status-b-file','status-b-key','status-b-ws'].forEach(function(id){
+      var s = document.getElementById(id); if(s){ s.textContent=''; s.className='field-status'; }
+    });
+    document.getElementById('btn-aa').disabled = true;
+    document.getElementById('btn-b').disabled = true;
+    document.getElementById('btn-ab-create').disabled = true;
+    document.getElementById('btn-ab-copy').disabled = true;
+    document.getElementById('ab-result').hidden = true;
+    document.getElementById('ab-prompt').value = '';
+    ['aa-status','ab-status','b-status'].forEach(function(id){ document.getElementById(id).textContent = ''; });
+    document.getElementById('aa-result').hidden = true;
+    document.getElementById('aa-output').value = '';
+    document.getElementById('b-result').hidden = true;
+    document.getElementById('b-output').value = '';
+    csvState = { ok: false, rows: [] };
+    render();
+  }
+
+  el.tile1a.addEventListener('click', function(){ state.path1 = 'A'; state.path2 = null; render(); });
+  el.tile1b.addEventListener('click', function(){ state.path1 = 'B'; state.path2 = null; render(); });
+  el.tile1aa.addEventListener('click', function(){ state.path2 = 'A'; render(); });
+  el.tile1ab.addEventListener('click', function(){ state.path2 = 'B'; render(); });
+
+  /* ============================================================
+     LÓGICA DEL EVALUADOR — leer repos de GitHub, armar el prompt,
+     llamar a la API de Anthropic, clasificar y guardar en disco.
+     Portado de agente/corrector_local.html; ver interacciones/registro.md
+     (sección 11) para el porqué de cada decisión.
+     ============================================================ */
+
+  var MODEL_PRICING = {
+    'claude-opus-5':    { input: 5.00,  output: 25.00 },
+    'claude-sonnet-5':  { input: 2.00,  output: 10.00 },
+    'claude-haiku-4-5': { input: 1.00,  output: 5.00 },
+  };
+  var SKIP_EXT = ['png','jpg','jpeg','gif','svg','ico','pdf','zip','tar','gz','7z','mp4','mp3',
+    'wav','woff','woff2','ttf','eot','exe','dll','so','class','jar','bin','xlsx','xls','docx',
+    'pptx','lock'];
+  var SKIP_DIR = ['.git/', 'node_modules/', 'dist/', 'build/', '.venv/', '__pycache__/'];
+  var MAX_FILE_BYTES = 60000;
+  var MAX_TOTAL_CHARS = 300000;
+  var EXTRA_ROOT_FILES = ['ANALISIS_ECONOMICO.md', 'DECISIONES.md', 'GOBIERNO.md', 'README.md'];
+
+  var cachedSources = null;
+  function loadPromptSources(){
+    if (cachedSources) return Promise.resolve(cachedSources);
+    return Promise.all([
+      fetch('./system_prompt.md').then(function(r){ if(!r.ok) throw new Error('No pude leer agente/system_prompt.md (' + r.status + ') — ¿estás sirviendo la página por http://localhost desde la raíz del repo?'); return r.text(); }),
+      fetch('../rubrica.md').then(function(r){ if(!r.ok) throw new Error('No pude leer rubrica.md (' + r.status + ')'); return r.text(); }),
+    ]).then(function(res){
+      cachedSources = { systemPrompt: res[0].trim(), rubrica: res[1].trim() };
+      return cachedSources;
+    });
+  }
+
+  async function githubJson(url){
+    var res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!res.ok) {
+      var body = await res.text().catch(function(){ return ''; });
+      throw new Error('GitHub API ' + res.status + ' en ' + url + (body ? ' — ' + body.slice(0,200) : ''));
+    }
+    return res.json();
+  }
+
+  async function fetchRepoTree(owner, repo){
+    var repoInfo = await githubJson('https://api.github.com/repos/' + owner + '/' + repo);
+    var branch = repoInfo.default_branch;
+    var tree = await githubJson('https://api.github.com/repos/' + owner + '/' + repo + '/git/trees/' + branch + '?recursive=1');
+    return { branch: branch, blobs: tree.tree.filter(function(e){ return e.type === 'blob'; }) };
+  }
+
+  async function buildRepoDumpText(owner, repo, branch, blobs, onStatus){
+    var entries = blobs.filter(function(e){
+      var lower = e.path.toLowerCase();
+      if (SKIP_DIR.some(function(d){ return lower.indexOf(d) > -1; })) return false;
+      var ext = lower.split('.').pop();
+      if (SKIP_EXT.indexOf(ext) > -1) return false;
+      if (e.size && e.size > MAX_FILE_BYTES) return false;
+      return true;
+    });
+    var allPaths = blobs.map(function(e){ return e.path; });
+    var skippedLarge = blobs.filter(function(e){ return e.size > MAX_FILE_BYTES; }).map(function(e){ return e.path; });
+
+    var dump = '', totalChars = 0, filesIncluded = 0, truncatedByBudget = false;
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i];
+      if (totalChars > MAX_TOTAL_CHARS) { truncatedByBudget = true; break; }
+      if (onStatus) onStatus('Leyendo ' + entry.path + '...');
+      var rawUrl = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + branch + '/' + entry.path.split('/').map(encodeURIComponent).join('/');
+      try {
+        var res = await fetch(rawUrl);
+        if (!res.ok) continue;
+        var text = await res.text();
+        var block = '\n### ' + entry.path + '\n```\n' + text + '\n```\n';
+        dump += block; totalChars += block.length; filesIncluded++;
+      } catch (e) { /* skip file we couldn't read */ }
+    }
+    var header = 'Estructura completa del repo (' + allPaths.length + ' archivos detectados):\n';
+    header += allPaths.map(function(p){ return '- ' + p; }).join('\n') + '\n\n';
+    if (skippedLarge.length) header += 'Archivos NO leídos por ser demasiado grandes (tratalos como si no existieran): ' + skippedLarge.join(', ') + '\n\n';
+    if (truncatedByBudget) header += 'Aviso: se alcanzó el límite de contenido de esta herramienta antes de leer todos los archivos elegibles. No asumas contenido de lo que no se incluyó abajo.\n\n';
+    header += 'Contenido de los ' + filesIncluded + ' archivos leídos:\n';
+    return header + dump;
+  }
+
+  async function buildFullPrompt(owner, repo, onStatus){
+    var sources = await loadPromptSources();
+    if (onStatus) onStatus('Buscando la rama por defecto...');
+    var treeInfo = await fetchRepoTree(owner, repo);
+    if (onStatus) onStatus('Listando archivos de ' + owner + '/' + repo + '@' + treeInfo.branch + '...');
+    var repoDump = await buildRepoDumpText(owner, repo, treeInfo.branch, treeInfo.blobs, onStatus);
+    var prompt = 'INSTRUCCIONES (system prompt del corrector):\n' + sources.systemPrompt +
+      '\n\n---\n\nRÚBRICA A APLICAR:\n' + sources.rubrica +
+      '\n\n---\n\nRepositorio a evaluar: ' + owner + '/' + repo + ' (rama ' + treeInfo.branch + ')\n\n' + repoDump;
+    return { prompt: prompt, branch: treeInfo.branch, blobs: treeInfo.blobs };
+  }
+
+  async function callClaudeAPI(prompt, apiKey, model, workspaceId){
+    var headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    };
+    if (workspaceId) headers['anthropic-workspace-id'] = workspaceId;
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: headers,
+      body: JSON.stringify({ model: model, max_tokens: 8000, messages: [{ role: 'user', content: prompt }] }),
+    });
+    var data = await res.json().catch(function(){ return null; });
+    if (!res.ok) {
+      var msg = (data && data.error && data.error.message) || ('HTTP ' + res.status);
+      if (res.status === 400 && /anthropic-workspace-id/i.test(msg)) {
+        msg += ' — completá el Workspace ID (Console → Settings → Workspaces, empieza con wrkspc_).';
+      }
+      throw new Error('API de Anthropic (' + res.status + '): ' + msg);
+    }
+    var text = (data.content || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('\n');
+    return { text: text, usage: data.usage || {} };
+  }
+
+  function formatUsageBlock(usage, model){
+    var pricing = MODEL_PRICING[model];
+    var inTok = usage.input_tokens || 0, outTok = usage.output_tokens || 0;
+    var block = '\n\n---\n\n## Uso de tokens de esta corrida\n\n| Concepto | Valor |\n|---|---|\n' +
+      '| Modelo | ' + model + ' |\n| Tokens de entrada | ' + inTok + ' |\n| Tokens de salida | ' + outTok + ' |\n| Total | ' + (inTok + outTok) + ' |\n';
+    if (pricing) {
+      var cost = (inTok / 1e6) * pricing.input + (outTok / 1e6) * pricing.output;
+      block += '| Costo estimado (precio de referencia) | USD ' + cost.toFixed(6) + ' |\n';
+    }
+    return block;
+  }
+
+  /* ---------- clasificación excelente / flojo / tramposo ---------- */
+  function classifyResult(text){
+    if (/Posible caso de trabajo tramposo detectado/i.test(text)) return 'tramposo';
+    var m = text.match(/Puntaje total:\s*(\d+)\s*\/\s*100/i);
+    if (!m) return null;
+    return parseInt(m[1], 10) >= 70 ? 'excelente' : 'flojo';
+  }
+
+  /* ---------- carpeta del repo: File System Access API + IndexedDB ---------- */
+  var DB_NAME = 'sonda-fs', STORE_NAME = 'handles', HANDLE_KEY = 'repoRoot';
+  function idbOpen(){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore(STORE_NAME); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  async function idbGet(key){
+    var db = await idbOpen();
+    return new Promise(function(resolve, reject){
+      var req = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(key);
+      req.onsuccess = function(){ resolve(req.result || null); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  async function idbSet(key, value){
+    var db = await idbOpen();
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put(value, key);
+      tx.oncomplete = function(){ resolve(); };
+      tx.onerror = function(){ reject(tx.error); };
+    });
+  }
+
+  var repoRootHandle = null;
+  async function getRepoRootHandle(){
+    if (repoRootHandle) return repoRootHandle;
+    if (!window.showDirectoryPicker) {
+      throw new Error('Tu navegador no soporta guardar archivos automáticamente. Abrí Sonda en Chrome o Edge, servida por http://localhost (no como archivo local con doble clic).');
+    }
+    var handle = await idbGet(HANDLE_KEY).catch(function(){ return null; });
+    if (handle) {
+      var perm = await handle.queryPermission({ mode: 'readwrite' }).catch(function(){ return 'denied'; });
+      if (perm !== 'granted') {
+        var req = await handle.requestPermission({ mode: 'readwrite' }).catch(function(){ return 'denied'; });
+        if (req !== 'granted') handle = null;
+      }
+    }
+    if (!handle) {
+      handle = await window.showDirectoryPicker({ id: 'evaluador-repo-root', mode: 'readwrite' });
+      try { await handle.getDirectoryHandle('casos'); }
+      catch (e) { throw new Error('Esa carpeta no tiene "casos/" — elegí la raíz del repo del agente evaluador.'); }
+      await idbSet(HANDLE_KEY, handle);
+    }
+    repoRootHandle = handle;
+    return handle;
+  }
+
+  async function ensureDir(parent, name){ return parent.getDirectoryHandle(name, { create: true }); }
+  async function writeFile(dir, name, contents){
+    var fh = await dir.getFileHandle(name, { create: true });
+    var w = await fh.createWritable();
+    await w.write(contents);
+    await w.close();
+  }
+  function sanitizeFolderName(name){
+    var cleaned = name.trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').slice(0, 80);
+    return cleaned || 'sin-nombre';
+  }
+
+  async function copyExtras(owner, repo, branch, blobs, destDir, onStatus){
+    var wanted = blobs.filter(function(e){
+      var lower = e.path.toLowerCase();
+      if (lower.indexOf('corridas/') === 0 || lower.indexOf('prompts/') === 0) return true;
+      if (lower.indexOf('/') === -1 && EXTRA_ROOT_FILES.some(function(f){ return f.toLowerCase() === lower; })) return true;
+      return false;
+    });
+    for (var i = 0; i < wanted.length; i++) {
+      var entry = wanted[i];
+      if (onStatus) onStatus('Copiando ' + entry.path + '...');
+      var rawUrl = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + branch + '/' + entry.path.split('/').map(encodeURIComponent).join('/');
+      var text;
+      try {
+        var res = await fetch(rawUrl);
+        if (!res.ok) continue;
+        text = await res.text();
+      } catch (e) { continue; }
+      var parts = entry.path.split('/');
+      var fileName = parts.pop();
+      var dir = destDir;
+      for (var j = 0; j < parts.length; j++) dir = await ensureDir(dir, parts[j]);
+      await writeFile(dir, fileName, text);
+    }
+  }
+
+  /* ---------- pipeline por repo, compartido entre 1A-A y 1B ---------- */
+  async function evaluateAndFile(opts){
+    var rootDir = await getRepoRootHandle();
+    var built = await buildFullPrompt(opts.owner, opts.repo, opts.onStatus);
+    if (opts.onStatus) opts.onStatus('Llamando a la API de Anthropic (' + opts.model + ')...');
+    var result = await callClaudeAPI(built.prompt, opts.apiKey, opts.model, opts.workspaceId);
+    var nivel = classifyResult(result.text);
+    if (!nivel) throw new Error('No encontré la línea "Puntaje total: X/100" en la respuesta — no se guardó nada, revisá el informe manualmente.');
+    if (opts.onStatus) opts.onStatus('Guardando en casos/' + nivel + '/...');
+    var casosDir = await rootDir.getDirectoryHandle('casos');
+    var nivelDir = await ensureDir(casosDir, nivel);
+    var safeName = sanitizeFolderName(opts.creador);
+    var destDir = await ensureDir(nivelDir, safeName);
+    var fullReport = result.text + formatUsageBlock(result.usage, opts.model);
+    await writeFile(destDir, 'Correccion_de_' + safeName + '.md', fullReport);
+    await copyExtras(opts.owner, opts.repo, built.branch, built.blobs, destDir, opts.onStatus);
+    return { nivel: nivel, usage: result.usage, text: fullReport, folder: 'casos/' + nivel + '/' + safeName + '/' };
+  }
+
+  /* ---------- validators ---------- */
+  function isValidUrl(v){
+    v = v.trim();
+    if(!v) return false;
+    try{
+      var u = new URL(v);
+      return (u.protocol === 'http:' || u.protocol === 'https:') && u.hostname.indexOf('.') > -1;
+    }catch(e){ return false; }
+  }
+  function isValidText(v, min){
+    return v.trim().length >= (min || 2);
+  }
+  function isValidKey(v){
+    return v.trim().length >= 15;
+  }
+  function isValidWorkspace(v){
+    return v.trim().length >= 5;
+  }
+
+  function setField(inputEl, statusEl, hintEl, ok, okMsg, errMsg){
+    var val = inputEl.value.trim();
+    inputEl.classList.toggle('is-valid', val !== '' && ok);
+    inputEl.classList.toggle('is-invalid', val !== '' && !ok);
+    if(val === ''){
+      statusEl.textContent = '';
+      statusEl.className = 'field-status';
+      hintEl.textContent = '';
+      hintEl.className = 'hint';
+    } else if(ok){
+      statusEl.textContent = TEXTS.common.statusValid;
+      statusEl.className = 'field-status ok';
+      hintEl.textContent = okMsg || '';
+      hintEl.className = 'hint hint-ok';
+    } else {
+      statusEl.textContent = TEXTS.common.statusInvalid;
+      statusEl.className = 'field-status err';
+      hintEl.textContent = errMsg;
+      hintEl.className = 'hint hint-err';
+    }
+    return val !== '' && ok;
+  }
+
+  /* ---------- panel 1A-A ---------- */
+  var aaUrl = document.getElementById('aa-url');
+  var aaName = document.getElementById('aa-name');
+  var aaKey = document.getElementById('aa-key');
+  var aaWs = document.getElementById('aa-ws');
+  var aaModel = document.getElementById('aa-model');
+  var btnAA = document.getElementById('btn-aa');
+  var aaStatus = document.getElementById('aa-status');
+  var aaResult = document.getElementById('aa-result');
+  var aaOutput = document.getElementById('aa-output');
+
+  aaModel.value = storageGet('sonda_model') || 'claude-opus-5';
+  aaModel.addEventListener('change', function(){ storageSet('sonda_model', aaModel.value); });
+
+  function checkAA(){
+    var ok1 = setField(aaUrl, document.getElementById('status-aa-url'), document.getElementById('hint-aa-url'),
+      isValidUrl(aaUrl.value), '', TEXTS.common.errorUrl);
+    var ok2 = setField(aaName, document.getElementById('status-aa-name'), document.getElementById('hint-aa-name'),
+      isValidText(aaName.value, 2), '', TEXTS.common.errorName);
+    var ok3 = setField(aaKey, document.getElementById('status-aa-key'), document.getElementById('hint-aa-key'),
+      isValidKey(aaKey.value), '', TEXTS.common.errorKey);
+    var ok4 = setField(aaWs, document.getElementById('status-aa-ws'), document.getElementById('hint-aa-ws'),
+      isValidWorkspace(aaWs.value), '', TEXTS.common.errorWorkspace);
+    btnAA.disabled = !(ok1 && ok2 && ok3 && ok4);
+  }
+  [aaUrl, aaName, aaKey, aaWs].forEach(function(i){ i.addEventListener('input', checkAA); });
+  btnAA.addEventListener('click', async function(){
+    var original = TEXTS.panelAA.button;
+    var parsed = parseRepoUrl(aaUrl.value);
+    if (!parsed) { aaStatus.textContent = 'No pude interpretar esa URL como repo de GitHub.'; return; }
+
+    btnAA.textContent = TEXTS.common.buttonBusy;
+    btnAA.disabled = true;
+    aaResult.hidden = true;
+    try {
+      var res = await evaluateAndFile({
+        owner: parsed.owner, repo: parsed.repo,
+        creador: aaName.value.trim(), apiKey: aaKey.value.trim(),
+        model: aaModel.value, workspaceId: aaWs.value.trim(),
+        onStatus: function(msg){ aaStatus.textContent = msg; },
+      });
+      aaStatus.textContent = 'Listo — nivel ' + res.nivel + ', guardado en ' + res.folder;
+      aaOutput.value = res.text;
+      aaResult.hidden = false;
+      btnAA.textContent = TEXTS.common.buttonDone;
+      setTimeout(function(){ btnAA.textContent = original; checkAA(); }, 1600);
+    } catch (err) {
+      aaStatus.textContent = 'Error: ' + err.message;
+      btnAA.textContent = original;
+      checkAA();
+    }
+  });
+
+  /* ---------- panel 1A-B ---------- */
+  var abUrl = document.getElementById('ab-url');
+  var btnABCreate = document.getElementById('btn-ab-create');
+  var btnABCopy = document.getElementById('btn-ab-copy');
+  var abResult = document.getElementById('ab-result');
+  var abPrompt = document.getElementById('ab-prompt');
+  var abCopyFlag = document.getElementById('ab-copy-flag');
+  var abStatus = document.getElementById('ab-status');
+
+  function checkAB(){
+    var ok = setField(abUrl, document.getElementById('status-ab-url'), document.getElementById('hint-ab-url'),
+      isValidUrl(abUrl.value), '', TEXTS.common.errorUrl);
+    btnABCreate.disabled = !ok;
+    abResult.hidden = true;
+    btnABCopy.disabled = true;
+    abCopyFlag.classList.remove('show');
+    abStatus.textContent = '';
+  }
+  abUrl.addEventListener('input', checkAB);
+
+  btnABCreate.addEventListener('click', async function(){
+    var parsed = parseRepoUrl(abUrl.value);
+    if (!parsed) { abStatus.textContent = 'No pude interpretar esa URL como repo de GitHub.'; return; }
+
+    var original = TEXTS.panelAB.buttonCreate;
+    btnABCreate.textContent = TEXTS.common.buttonBusy;
+    btnABCreate.disabled = true;
+    abResult.hidden = true;
+    try {
+      var built = await buildFullPrompt(parsed.owner, parsed.repo, function(msg){ abStatus.textContent = msg; });
+      abPrompt.value = built.prompt;
+      abResult.hidden = false;
+      btnABCopy.disabled = false;
+      abCopyFlag.classList.remove('show');
+      abStatus.textContent = 'Prompt listo (' + built.blobs.length + ' archivos detectados en el repo).';
+    } catch (err) {
+      abStatus.textContent = 'Error: ' + err.message;
+    } finally {
+      btnABCreate.textContent = original;
+      btnABCreate.disabled = !isValidUrl(abUrl.value);
+    }
+  });
+
+  btnABCopy.addEventListener('click', function(){
+    var text = abPrompt.value;
+    function flag(){
+      abCopyFlag.classList.add('show');
+      setTimeout(function(){ abCopyFlag.classList.remove('show'); }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(flag, function(){ fallbackCopy(); });
+    } else {
+      fallbackCopy();
+    }
+    function fallbackCopy(){
+      abPrompt.removeAttribute('readonly');
+      abPrompt.focus();
+      abPrompt.select();
+      try{ document.execCommand('copy'); flag(); }catch(e){}
+      abPrompt.setAttribute('readonly', 'readonly');
+    }
+  });
+
+  /* ---------- panel 1B ---------- */
+  var bFileInput = document.getElementById('b-file');
+  var bFileDrop = document.getElementById('b-filedrop');
+  var bFileDropText = document.getElementById('b-filedrop-text');
+  var bKey = document.getElementById('b-key');
+  var bWs = document.getElementById('b-ws');
+  var bModel = document.getElementById('b-model');
+  var btnB = document.getElementById('btn-b');
+  var bStatus = document.getElementById('b-status');
+  var bResult = document.getElementById('b-result');
+  var bOutput = document.getElementById('b-output');
+  var csvState = { ok: false, rows: [] };
+
+  bModel.value = storageGet('sonda_model') || 'claude-opus-5';
+  bModel.addEventListener('change', function(){ storageSet('sonda_model', bModel.value); });
+
+  bFileDrop.addEventListener('click', function(){ bFileInput.click(); });
+  bFileDrop.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); bFileInput.click(); }
+  });
+
+  function parseCsv(text){
+    var lines = text.split(/\r?\n/).filter(function(l){ return l.trim() !== ''; });
+    if(lines.length === 0) return { ok: false, rows: 0, parsed: [] };
+    var validLines = lines.filter(function(l){
+      var cols = l.split(/[,;\t]/);
+      return cols.length >= 2 && cols[0].trim() !== '' && cols[1].trim() !== '';
+    });
+    var ratio = validLines.length / lines.length;
+    var parsed = validLines.map(function(l){
+      var cols = l.split(/[,;\t]/);
+      return { url: cols[0].trim(), creador: cols[1].trim() };
+    });
+    return { ok: ratio >= 0.8 && validLines.length >= 1, rows: validLines.length, parsed: parsed };
+  }
+
+  function checkB(){
+    var ok2 = setField(bKey, document.getElementById('status-b-key'), document.getElementById('hint-b-key'),
+      isValidKey(bKey.value), '', TEXTS.common.errorKey);
+    var ok3 = setField(bWs, document.getElementById('status-b-ws'), document.getElementById('hint-b-ws'),
+      isValidWorkspace(bWs.value), '', TEXTS.common.errorWorkspace);
+    btnB.disabled = !(csvState.ok && ok2 && ok3);
+  }
+  [bKey, bWs].forEach(function(i){ i.addEventListener('input', checkB); });
+
+  bFileInput.addEventListener('change', function(){
+    var file = bFileInput.files[0];
+    var statusEl = document.getElementById('status-b-file');
+    var hintEl = document.getElementById('hint-b-file');
+    if(!file){ return; }
+    var isCsvExt = /\.csv$/i.test(file.name);
+    if(!isCsvExt){
+      csvState = { ok: false, rows: [] };
+      bFileDrop.classList.add('is-invalid'); bFileDrop.classList.remove('is-valid');
+      statusEl.textContent = TEXTS.common.statusInvalid; statusEl.className = 'field-status err';
+      hintEl.textContent = TEXTS.panelB.errorExt; hintEl.className = 'hint hint-err';
+      bFileDropText.innerHTML = fill(TEXTS.panelB.dropInvalidExt, { name: file.name });
+      checkB();
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var parsed = parseCsv(String(reader.result));
+      csvState = { ok: parsed.ok, rows: parsed.parsed || [] };
+      if(parsed.ok){
+        bFileDrop.classList.add('is-valid'); bFileDrop.classList.remove('is-invalid');
+        statusEl.textContent = TEXTS.common.statusValid; statusEl.className = 'field-status ok';
+        hintEl.textContent = fill(TEXTS.panelB.hintRows, { rows: parsed.rows }); hintEl.className = 'hint hint-ok';
+        bFileDropText.innerHTML = fill(TEXTS.panelB.dropValid, { name: file.name, rows: parsed.rows });
+      } else {
+        bFileDrop.classList.add('is-invalid'); bFileDrop.classList.remove('is-valid');
+        statusEl.textContent = TEXTS.common.statusInvalid; statusEl.className = 'field-status err';
+        hintEl.textContent = TEXTS.panelB.errorFormat; hintEl.className = 'hint hint-err';
+        bFileDropText.innerHTML = fill(TEXTS.panelB.dropInvalidFormat, { name: file.name });
+      }
+      checkB();
+    };
+    reader.readAsText(file);
+  });
+
+  btnB.addEventListener('click', async function(){
+    var original = TEXTS.panelB.button;
+    var rows = csvState.rows || [];
+    btnB.textContent = TEXTS.common.buttonBusy;
+    btnB.disabled = true;
+    bResult.hidden = true;
+
+    var results = [];
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      bStatus.textContent = 'Procesando ' + (i + 1) + '/' + rows.length + ': ' + row.creador + '...';
+      var parsed = parseRepoUrl(row.url);
+      if (!parsed) {
+        results.push({ creador: row.creador, url: row.url, ok: false, error: 'URL no es un repo de GitHub válido' });
+        continue;
+      }
+      try {
+        var res = await evaluateAndFile({
+          owner: parsed.owner, repo: parsed.repo,
+          creador: row.creador, apiKey: bKey.value.trim(),
+          model: bModel.value, workspaceId: bWs.value.trim(),
+          onStatus: function(msg){ bStatus.textContent = 'Procesando ' + (i + 1) + '/' + rows.length + ': ' + row.creador + ' — ' + msg; },
+        });
+        results.push({ creador: row.creador, url: row.url, ok: true, nivel: res.nivel, folder: res.folder });
+      } catch (err) {
+        results.push({ creador: row.creador, url: row.url, ok: false, error: err.message });
+      }
+    }
+
+    var lines = ['| Creador | Nivel | Resultado |', '|---|---|---|'];
+    results.forEach(function(r){
+      lines.push('| ' + r.creador + ' | ' + (r.ok ? r.nivel : '—') + ' | ' + (r.ok ? 'Guardado en ' + r.folder : 'Error: ' + r.error) + ' |');
+    });
+    bOutput.value = lines.join('\n');
+    bResult.hidden = false;
+    var okCount = results.filter(function(r){ return r.ok; }).length;
+    bStatus.textContent = 'Listo — ' + okCount + '/' + results.length + ' repos evaluados sin error.';
+
+    btnB.textContent = TEXTS.common.buttonDone;
+    setTimeout(function(){ btnB.textContent = original; checkB(); }, 1600);
+  });
+
+  applyTexts();
+  render();
+})();
+</script>
+</body>
+</html>

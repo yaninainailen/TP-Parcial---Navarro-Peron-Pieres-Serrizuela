@@ -89,17 +89,52 @@
 <h1>Preparar corrección del agente evaluador</h1>
 <p class="sub">Pegá la URL de un repo público de GitHub. La página busca el repo (gratis, sin
 key ni login) y arma el prompt completo con <code>agente/system_prompt.md</code> +
-<code>rubrica.md</code> + el contenido real del repositorio, listo para pegar en un chat de IA
-(Claude, ChatGPT, o esta misma conversación). No llama a ninguna API por su cuenta — no hace
-falta ninguna key ni facturación aparte.</p>
+<code>rubrica.md</code> + el contenido real del repositorio. Con eso podés: (a) apretar
+<strong>"Evaluar con Claude"</strong> para que la página llame directo a la API de Anthropic y
+muestre la corrección junto con el uso de tokens de esa corrida, o (b) apretar
+<strong>"Preparar prompt"</strong> para copiarlo a mano y pegarlo en cualquier chat de IA. La
+opción (a) necesita tu propia API key de Anthropic y consume crédito pago de tu cuenta — la (b)
+es gratis.</p>
 
 <div class="panel">
   <label for="repoUrl">URL del repositorio (público)</label>
   <input id="repoUrl" placeholder="https://github.com/usuario/repo">
 
   <div class="row">
+    <div>
+      <label for="apiKey">API key de Anthropic (opcional — solo para "Evaluar con Claude")</label>
+      <input id="apiKey" type="password" placeholder="sk-ant-...">
+    </div>
+    <div>
+      <label for="model">Modelo</label>
+      <select id="model">
+        <option value="claude-opus-5">Claude Opus 5 — $5 / $25 por MTok (in/out)</option>
+        <option value="claude-sonnet-5">Claude Sonnet 5 — $2 / $10 por MTok (in/out)</option>
+        <option value="claude-haiku-4-5">Claude Haiku 4.5 — $1 / $5 por MTok (in/out)</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <label for="workspaceId">Workspace ID (solo si tu key es "identity-linked" — ver nota abajo)</label>
+      <input id="workspaceId" placeholder="wrkspc_...">
+    </div>
+  </div>
+  <p class="note">La key se guarda solo en el navegador (localStorage), nunca se sube al repo ni
+  pasa por otro servidor — el pedido va directo de este navegador a <code>api.anthropic.com</code>.
+  Igual, no es un lugar seguro para una key de producción: cualquiera con acceso a este navegador
+  puede leerla. Precios de referencia, pueden cambiar — confirmá en la consola de Anthropic.<br>
+  Si la API devuelve el error <code>anthropic-workspace-id is required when authenticating with an
+  identity-linked API key</code>, tu key es personal y tiene acceso a varios workspaces: buscá el
+  ID del workspace en Console → Settings → Workspaces (empieza con <code>wrkspc_</code>) y pegalo
+  en el campo de arriba.</p>
+
+  <div class="row">
     <div style="flex: 0 0 auto;">
-      <button id="runBtn">Preparar prompt</button>
+      <button id="evalBtn">Evaluar con Claude</button>
+    </div>
+    <div style="flex: 0 0 auto;">
+      <button class="secondary" id="runBtn" type="button">Preparar prompt (manual)</button>
     </div>
     <div style="flex: 0 0 auto;">
       <button class="secondary" id="copyBtn" type="button" disabled>Copiar al portapapeles</button>
@@ -338,9 +373,18 @@ Suma simple de los 5 puntajes (máximo 100). No hay redondeos ni bonus discrecio
 (function () {
   const $ = (id) => document.getElementById(id);
   const repoUrlEl = $('repoUrl');
-  const runBtn = $('runBtn'), copyBtn = $('copyBtn'), statusEl = $('status'), outputEl = $('output');
+  const apiKeyEl = $('apiKey'), modelEl = $('model'), workspaceIdEl = $('workspaceId');
+  const runBtn = $('runBtn'), evalBtn = $('evalBtn'), copyBtn = $('copyBtn'), statusEl = $('status'), outputEl = $('output');
   const systemPrompt = $('systemPromptText').textContent.trim();
   const rubrica = $('rubricaText').textContent.trim();
+
+  // Precios de referencia USD por millón de tokens (input/output). Pueden cambiar —
+  // confirmar en la consola de Anthropic antes de confiar en el número para algo serio.
+  const MODEL_PRICING = {
+    'claude-opus-5':   { input: 5.00,  output: 25.00 },
+    'claude-sonnet-5': { input: 2.00,  output: 10.00 },
+    'claude-haiku-4-5': { input: 1.00, output: 5.00 },
+  };
 
   // localStorage puede tirar una excepción en páginas abiertas como archivo local
   // (file://) en algunos navegadores — todo acceso va envuelto en try/catch para
@@ -352,8 +396,14 @@ Suma simple de los 5 puntajes (máximo 100). No hay redondeos ni bonus discrecio
     try { localStorage.setItem(key, value); } catch (e) { /* no persiste, no pasa nada */ }
   }
 
-  // Restore saved value (this browser only, si el navegador lo permite)
+  // Restore saved values (this browser only, si el navegador lo permite)
   repoUrlEl.value = storageGet('corrector_repoUrl') || '';
+  apiKeyEl.value = storageGet('corrector_apiKey') || '';
+  modelEl.value = storageGet('corrector_model') || 'claude-opus-5';
+  workspaceIdEl.value = storageGet('corrector_workspaceId') || '';
+  apiKeyEl.addEventListener('change', () => storageSet('corrector_apiKey', apiKeyEl.value.trim()));
+  modelEl.addEventListener('change', () => storageSet('corrector_model', modelEl.value));
+  workspaceIdEl.addEventListener('change', () => storageSet('corrector_workspaceId', workspaceIdEl.value.trim()));
 
   function setStatus(msg, cls) {
     statusEl.textContent = msg;
@@ -439,6 +489,68 @@ Suma simple de los 5 puntajes (máximo 100). No hay redondeos ni bonus discrecio
 
   let lastPrompt = '';
 
+  async function buildFullPrompt(owner, repo) {
+    const { text: repoDump, branch, fileCount } = await buildRepoDump(owner, repo);
+    const prompt = 'INSTRUCCIONES (system prompt del corrector):\n' + systemPrompt +
+      '\n\n---\n\nRÚBRICA A APLICAR:\n' + rubrica +
+      '\n\n---\n\nRepositorio a evaluar: ' + owner + '/' + repo +
+      ' (rama ' + branch + ')\n\n' + repoDump;
+    return { prompt, branch, fileCount };
+  }
+
+  // Llama directo a la API de Anthropic desde el navegador. Requiere el header
+  // anthropic-dangerous-direct-browser-access porque, sin él, la API rechaza pedidos
+  // hechos desde un origen de navegador (pensado para evitar exponer keys por accidente;
+  // acá es a propósito, la key nunca sale de este navegador hacia otro servidor nuestro).
+  async function callClaudeAPI(prompt, apiKey, model, workspaceId) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    };
+    // Las API keys "identity-linked" (personales, con acceso a varios workspaces) exigen este
+    // header o la API responde 400 pidiéndolo — ver interacciones/registro.md, sección 10.
+    if (workspaceId) headers['anthropic-workspace-id'] = workspaceId;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 8000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      let msg = (data && data.error && data.error.message) || `HTTP ${res.status}`;
+      if (res.status === 400 && /anthropic-workspace-id/i.test(msg)) {
+        msg += ' — completá el campo "Workspace ID" arriba con el ID de tu workspace (Console → Settings → Workspaces, empieza con wrkspc_).';
+      }
+      throw new Error(`API de Anthropic (${res.status}): ${msg}`);
+    }
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+    return { text, usage: data.usage || {}, model: data.model || model };
+  }
+
+  function formatUsageBlock(usage, model) {
+    const pricing = MODEL_PRICING[model];
+    const inTok = usage.input_tokens || 0;
+    const outTok = usage.output_tokens || 0;
+    let block = `\n\n---\n\n## Uso de tokens de esta corrida\n\n` +
+      `| Concepto | Valor |\n|---|---|\n` +
+      `| Modelo | ${model} |\n` +
+      `| Tokens de entrada | ${inTok} |\n` +
+      `| Tokens de salida | ${outTok} |\n` +
+      `| Total | ${inTok + outTok} |\n`;
+    if (pricing) {
+      const cost = (inTok / 1e6) * pricing.input + (outTok / 1e6) * pricing.output;
+      block += `| Costo estimado (precio de referencia) | USD ${cost.toFixed(6)} |\n`;
+    }
+    return block;
+  }
+
   copyBtn.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(lastPrompt);
@@ -462,20 +574,56 @@ Suma simple de los 5 puntajes (máximo 100). No hay redondeos ni bonus discrecio
 
     runBtn.disabled = true;
     try {
-      const { text: repoDump, branch, fileCount } = await buildRepoDump(parsed.owner, parsed.repo);
+      const { prompt, branch, fileCount } = await buildFullPrompt(parsed.owner, parsed.repo);
       setStatus(`Repo leído (${fileCount} archivos, rama ${branch}). Prompt listo abajo.`, 'ok');
 
-      lastPrompt = 'INSTRUCCIONES (system prompt del corrector):\n' + systemPrompt +
-        '\n\n---\n\nRÚBRICA A APLICAR:\n' + rubrica +
-        '\n\n---\n\nRepositorio a evaluar: ' + parsed.owner + '/' + parsed.repo +
-        ' (rama ' + branch + ')\n\n' + repoDump;
-
+      lastPrompt = prompt;
       outputEl.textContent = lastPrompt;
       outputEl.style.display = 'block';
       copyBtn.disabled = false;
     } catch (err) {
       setStatus('Error: ' + err.message, 'err');
     } finally {
+      runBtn.disabled = false;
+    }
+  });
+
+  evalBtn.addEventListener('click', async () => {
+    const repoUrl = repoUrlEl.value.trim();
+    const apiKey = apiKeyEl.value.trim();
+    const model = modelEl.value;
+    const workspaceId = workspaceIdEl.value.trim();
+
+    outputEl.style.display = 'none';
+    outputEl.textContent = '';
+    copyBtn.disabled = true;
+
+    const parsed = parseRepoUrl(repoUrl);
+    if (!parsed) { setStatus('No pude interpretar esa URL. Formato esperado: https://github.com/usuario/repo', 'err'); return; }
+    if (!apiKey) { setStatus('Falta la API key de Anthropic — pegala arriba, o usá "Preparar prompt (manual)" si no querés usar una key.', 'err'); return; }
+
+    storageSet('corrector_repoUrl', repoUrl);
+    storageSet('corrector_apiKey', apiKey);
+    storageSet('corrector_model', model);
+    storageSet('corrector_workspaceId', workspaceId);
+
+    evalBtn.disabled = true;
+    runBtn.disabled = true;
+    try {
+      const { prompt, branch, fileCount } = await buildFullPrompt(parsed.owner, parsed.repo);
+      setStatus(`Repo leído (${fileCount} archivos, rama ${branch}). Llamando a la API de Anthropic (${model})...`, 'ok');
+
+      const { text, usage } = await callClaudeAPI(prompt, apiKey, model, workspaceId);
+
+      lastPrompt = prompt;
+      outputEl.textContent = text + formatUsageBlock(usage, model);
+      outputEl.style.display = 'block';
+      copyBtn.disabled = false;
+      setStatus(`Corrección lista (${model}, ${(usage.input_tokens || 0) + (usage.output_tokens || 0)} tokens totales).`, 'ok');
+    } catch (err) {
+      setStatus('Error: ' + err.message, 'err');
+    } finally {
+      evalBtn.disabled = false;
       runBtn.disabled = false;
     }
   });

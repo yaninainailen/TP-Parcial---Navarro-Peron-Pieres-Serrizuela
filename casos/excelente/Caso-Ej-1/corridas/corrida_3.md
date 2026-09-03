@@ -4,7 +4,9 @@ Después de lo detectado en la corrida 2, se reforzó en el system prompt la reg
 ("priorizá el cambio de talle/color por sobre el tono de queja"). Esta corrida repite un caso
 similar para confirmar si la mitigación funcionó.
 
-## Entrada (`tickets_entrada.csv`)
+## Entrada (`tickets_entrada_corrida3.csv`)
+
+Archivo real en este mismo directorio: [`tickets_entrada_corrida3.csv`](tickets_entrada_corrida3.csv).
 
 ```csv
 id,cliente,mensaje

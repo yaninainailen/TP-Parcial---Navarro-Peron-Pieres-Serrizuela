@@ -20,7 +20,7 @@ instrucciones centrales, tal como quedaron después de iterar (ver `DECISIONES.m
 > en la política de cambios. Devolvé la salida en la tabla markdown que se especifica en el
 > formato de salida.
 
-> Acá está la planilla de tickets pendientes de hoy (`corridas/tickets_entrada.csv`, columnas:
+> Acá está la planilla de tickets pendientes de hoy (`corridas/tickets_entrada_corridaN.csv`, columnas:
 > id, cliente, mensaje). Procesá cada fila y devolveme la tabla completa.
 
 ## Qué funciona

@@ -28,6 +28,55 @@ corridas distintas, lo cual invalida la corrección.
 No se necesita acceso de escritura en ningún momento — el agente corrector nunca modifica el
 repo que evalúa.
 
+`agente/corrector_local.html` implementa esto de dos formas, elegibles en la misma página:
+
+- **Automática ("Evaluar con Claude"):** la página arma el prompt (system prompt + rúbrica +
+  contenido del repo leído vía la API pública de GitHub) y llama directo a
+  `api.anthropic.com/v1/messages` desde el navegador, con la API key y el modelo que elija quien
+  corre la herramienta. Requiere una API key propia de Anthropic (consume crédito pago) y muestra
+  el uso de tokens (`usage.input_tokens`/`usage.output_tokens`) y un costo estimado de esa corrida
+  al pie del informe.
+- **Manual ("Preparar prompt"):** como antes — arma el mismo prompt y lo deja listo para copiar a
+  mano en cualquier chat de IA, sin key ni costo.
+
+La API key se guarda solo en `localStorage` del navegador de quien la usa, nunca en el repo ni en
+ningún servidor propio del grupo.
+
+**Nota sobre tipos de API key:** si la key es de tipo "identity-linked" (personal, con acceso a
+varios workspaces de la cuenta de Anthropic), la API exige además el header
+`anthropic-workspace-id` con el ID del workspace en el que corre el pedido — la página tiene un
+campo aparte para pegarlo (Console → Settings → Workspaces, empieza con `wrkspc_`). Con una key de
+workspace normal (no identity-linked) ese campo se puede dejar vacío.
+
+### `agente/sonda_v0.2.html` — versión con guardado automático y modo lote
+
+Sonda hace lo mismo que `corrector_local.html` (lee el repo, arma el prompt, llama a la API) pero
+agrega dos cosas que ese archivo no tiene:
+
+1. **Tres caminos, elegibles paso a paso:** un repo con API (guarda el resultado en disco), un repo
+   sin API (arma el prompt para copiar a mano, igual que el modo manual de `corrector_local.html`),
+   o una lista de repos por CSV (`url,creador` por fila) procesados uno por uno con la misma API.
+2. **Guardado automático en disco.** Cuando se usa la API (los dos primeros caminos), al terminar
+   cada corrección Sonda: (a) clasifica el resultado — `tramposo` si el informe trae la alerta
+   obligatoria `⚠️ Posible caso de trabajo tramposo detectado`; si no, `excelente` con
+   `Puntaje total >= 70`, `flojo` por debajo de ese número — y (b) crea
+   `casos/<nivel>/<Creador del repo>/` con `Correccion_de_<Creador>.md` (el informe completo + uso
+   de tokens) más una copia de `corridas/`, `prompts/`, `ANALISIS_ECONOMICO.md`, `DECISIONES.md`,
+   `GOBIERNO.md` y `README.md` del repo evaluado.
+
+**Por qué necesita un servidor local y no alcanza con abrir el archivo con doble clic:** escribir
+carpetas y archivos en disco desde el navegador solo es posible con la File System Access API
+(`showDirectoryPicker`), y esa API exige un "contexto seguro" — no funciona en páginas `file://`.
+Sí funciona en `http://localhost`, así que Sonda se tiene que servir con un comando simple (ej.
+`python -m http.server` desde la raíz del repo) y abrirse como
+`http://localhost:8000/agente/sonda_v0.2.html`. Además, solo Chrome y Edge soportan esa API — en
+Firefox o Safari, Sonda avisa explícitamente que no puede guardar en disco en vez de fallar en
+silencio.
+
+La primera vez que se usa "Analizar", el navegador pide elegir la carpeta raíz del repo (un único
+permiso, se recuerda entre sesiones). El acceso es de lectura y escritura sobre esa carpeta
+puntual — Sonda nunca pide ni necesita acceso a ninguna otra parte del disco.
+
 ## Salida
 
 Texto en el formato fijo definido en `system_prompt.md`, sección "Formato de salida obligatorio".
