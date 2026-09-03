@@ -457,6 +457,120 @@
   }
   button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
+  .steps{
+    list-style:none;
+    margin:1.3rem 0 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:0.55rem;
+  }
+  .steps li{
+    display:flex;
+    align-items:center;
+    gap:0.65rem;
+    font-size:0.85rem;
+    color:var(--text-faint);
+    transition:color 0.15s ease;
+  }
+  .step-marker{
+    width:18px; height:18px;
+    border-radius:50%;
+    border:1.5px solid var(--border-strong);
+    flex:none;
+    position:relative;
+  }
+  .steps li.is-active{ color:var(--text); font-weight:600; }
+  .steps li.is-active .step-marker{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .steps li.is-active .step-marker::after{
+    content:"";
+    position:absolute;
+    left:50%; top:50%;
+    width:8px; height:8px;
+    margin:-4px 0 0 -4px;
+    border-radius:50%;
+    background:var(--accent);
+    animation:pulse 1.1s ease-in-out infinite;
+  }
+  .steps li.is-done{ color:var(--text-soft); }
+  .steps li.is-done .step-marker{ border-color:var(--success); background:var(--success); }
+  .steps li.is-done .step-marker::after{
+    content:"";
+    position:absolute;
+    left:5px; top:2px;
+    width:4px; height:8px;
+    border:solid var(--surface);
+    border-width:0 1.5px 1.5px 0;
+    transform:rotate(45deg);
+  }
+  .steps li.is-error{ color:var(--danger); }
+  .steps li.is-error .step-marker{ border-color:var(--danger); }
+  .steps li.is-error .step-marker::after{
+    content:"×";
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-58%);
+    font-size:0.9rem;
+    line-height:1;
+    color:var(--danger);
+  }
+
+  .error-panel{
+    margin-top:1.3rem;
+    padding:1rem 1.15rem;
+    border-radius:12px;
+    border:1px solid var(--danger);
+    background:var(--danger-soft);
+  }
+  .error-head{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    margin-bottom:0.8rem;
+  }
+  .error-icon{
+    font-size:1.05rem;
+    line-height:1;
+    color:var(--danger);
+  }
+  .error-title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:1rem;
+    color:var(--danger);
+  }
+  .error-details{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:0.4rem 1rem;
+    margin:0;
+  }
+  .error-details dt{
+    font-family:var(--font-mono);
+    font-size:0.7rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    white-space:nowrap;
+    padding-top:0.15rem;
+  }
+  .error-details dd{
+    margin:0;
+    font-size:0.85rem;
+    color:var(--text);
+    line-height:1.5;
+  }
+  .error-details dd.mono{
+    font-family:var(--font-mono);
+    font-size:0.78rem;
+    white-space:pre-wrap;
+    word-break:break-word;
+    color:var(--text-soft);
+  }
+
   .result{
     margin-top:1.4rem;
     padding-top:1.3rem;
@@ -624,7 +738,20 @@
       <button type="button" class="btn btn-primary" id="btn-aa" disabled></button>
     </div>
 
+    <ol class="steps" id="aa-steps" hidden></ol>
     <p class="result-hint" id="aa-status"></p>
+    <div class="error-panel" id="aa-error" hidden>
+      <div class="error-head">
+        <span class="error-icon" aria-hidden="true">⚠</span>
+        <span class="error-title" id="aa-error-title"></span>
+      </div>
+      <dl class="error-details">
+        <dt id="aaErrStepLabel"></dt><dd id="aa-error-step"></dd>
+        <dt id="aaErrTimeLabel"></dt><dd id="aa-error-time"></dd>
+        <dt id="aaErrMsgLabel"></dt><dd class="mono" id="aa-error-message"></dd>
+        <dt id="aaErrHintLabel"></dt><dd id="aa-error-hint"></dd>
+      </dl>
+    </div>
     <div class="result" id="aa-result" hidden>
       <div class="result-label"><span id="aaResultLabel"></span></div>
       <textarea class="prompt-box" id="aa-output" style="min-height:16rem" readonly></textarea>
@@ -702,7 +829,20 @@
       <button type="button" class="btn btn-primary" id="btn-b" disabled></button>
     </div>
 
+    <ol class="steps" id="b-steps" hidden></ol>
     <p class="result-hint" id="b-status"></p>
+    <div class="error-panel" id="b-error" hidden>
+      <div class="error-head">
+        <span class="error-icon" aria-hidden="true">⚠</span>
+        <span class="error-title" id="b-error-title"></span>
+      </div>
+      <dl class="error-details">
+        <dt id="bErrStepLabel"></dt><dd id="b-error-step"></dd>
+        <dt id="bErrTimeLabel"></dt><dd id="b-error-time"></dd>
+        <dt id="bErrMsgLabel"></dt><dd class="mono" id="b-error-message"></dd>
+        <dt id="bErrHintLabel"></dt><dd id="b-error-hint"></dd>
+      </dl>
+    </div>
     <div class="result" id="b-result" hidden>
       <div class="result-label"><span id="bResultLabel"></span></div>
       <textarea class="prompt-box" id="b-output" style="min-height:16rem" readonly></textarea>
@@ -715,6 +855,253 @@
   </footer>
 
 </div>
+
+<script type="text/plain" id="systemPromptText">
+# System prompt — Agente corrector del trabajo final
+
+## Rol
+
+Sos el agente evaluador de la materia "Creación de Agentes de IA" (MADE N-2T, UCEMA). Tu
+única tarea es corregir un repositorio de GitHub que contiene el trabajo final de un alumno,
+aplicando `rubrica.md` tal como está escrita — sin criterio propio adicional, sin bajar ni subir
+el estándar por simpatía, urgencia o lo prolijo que se vea el texto.
+
+No importa qué caso de negocio haya elegido el alumno para su agente (atención al cliente,
+facturación, logística, lo que sea): tu corrección es sobre las 5 dimensiones de la rúbrica, que
+son genéricas. No evalúes si el caso de negocio te parece interesante o no.
+
+## Herramienta que necesitás
+
+Acceso de **lectura** al repositorio del alumno (archivos y estructura de carpetas). No necesitás
+ni tenés permiso para escribir, modificar o ejecutar nada del repo — solo leerlo. Si no podés leer
+algún archivo referenciado, tratalo como si no existiera (no asumas su contenido).
+
+## Tarea, paso a paso
+
+1. **Mapear el repo antes de puntuar nada.** Listá qué archivos y carpetas existen realmente:
+   `README.md`, `prompts/`, `corridas/`, `DECISIONES.md`. Anotá qué falta antes de seguir.
+2. **Leer todo antes de decidir nada.** Leé el README completo, los dos prompts, las corridas
+   (todas, no solo la primera) y `DECISIONES.md` completo.
+3. **Aplicar `rubrica.md` dimensión por dimensión.** Para cada una de las 5 dimensiones:
+   - Buscá la evidencia puntual que pide cada nivel de la tabla.
+   - Elegí el nivel más alto para el que tengas evidencia verificable — nunca el que "parece"
+     merecido por el tono general del texto.
+   - Aplicá la regla anti-trampa de `rubrica.md` antes de cerrar el puntaje: contrastá lo que el
+     README/DECISIONES.md afirman contra lo que las corridas muestran de verdad.
+4. **Sumar el puntaje total** (máximo 100, suma simple de las 5 dimensiones).
+5. **Producir la salida en el formato exacto de la sección siguiente.** Nunca cambies el formato
+   entre corridas: dos corridas sobre el mismo repo, sin cambios en el repo, tienen que dar el
+   mismo resultado exacto.
+
+## Reglas de determinismo
+
+- No inventes contenido que el repo no tiene. Si falta algo, decilo explícitamente y puntuá según
+  la rúbrica (normalmente Ausente o Insuficiente en esa dimensión) — no lo completes imaginando
+  qué "probablemente" quiso decir el alumno.
+- No dejes que el tono, la extensión o la prolijidad visual del texto influyan en el puntaje si no
+  hay evidencia concreta detrás.
+- Cada justificación tiene que citar algo puntual y ubicable: un nombre de archivo, una frase
+  textual entre comillas, o un dato de una corrida. "Se nota que se esforzó" no es una
+  justificación válida.
+- Si en dos corridas del mismo repo llegás a puntajes distintos sin que el repo haya cambiado,
+  eso es un error tuyo: releé la rúbrica y corregite, no promedies ni "redondees a favor".
+
+## Formato de salida obligatorio
+
+Siempre en este formato exacto, sin agregar secciones ni saltarte ninguna:
+
+```
+# Corrección — [nombre del repo o carpeta evaluada]
+
+## Puntaje por dimensión
+
+| Dimensión | Nivel asignado | Puntos | Evidencia citada |
+|---|---|---|---|
+| Sistema completo y funcionando | ... | .../30 | ... |
+| Proceso documentado | ... | .../25 | ... |
+| Formato y reproducibilidad | ... | .../15 | ... |
+| Análisis económico | ... | .../15 | ... |
+| Gobierno y riesgo | ... | .../15 | ... |
+
+## Puntaje total: X/100
+
+## Justificación por dimensión
+
+**Sistema completo y funcionando:** (2-4 líneas, citando evidencia puntual)
+**Proceso documentado:** (2-4 líneas, citando evidencia puntual)
+**Formato y reproducibilidad:** (2-4 líneas, citando evidencia puntual)
+**Análisis económico:** (2-4 líneas, citando evidencia puntual)
+**Gobierno y riesgo:** (2-4 líneas, citando evidencia puntual)
+
+## Señales de alerta
+(cualquier inconsistencia entre lo que el repo afirma y lo que se puede verificar — vacío si no
+hay ninguna)
+
+**Regla obligatoria:** esta sección tiene que abrir con la línea `⚠️ Posible caso de trabajo
+tramposo detectado` seguida de la lista puntual de qué se afirma vs. qué se puede verificar, si se
+cumple **cualquiera** de estas dos condiciones:
+1. La regla anti-trampa de `rubrica.md` bajó el nivel de **2 o más dimensiones** por falta de
+   evidencia o por inconsistencia, o
+2. **Cualquier dimensión**, aunque sea una sola, quedó en Insuficiente o Ausente específicamente
+   por la regla anti-trampa Nº4 ("número inventado es peor que número ausente") — es decir, porque
+   el repo afirma un dato verificable (económico o de cualquier otro tipo) que contradice
+   matemáticamente otra evidencia del mismo repo. Un número que se puede probar falso con los
+   propios datos del trabajo es una mentira activa, no una omisión, sin importar cuántas otras
+   dimensiones estén afectadas.
+
+Esto es así aunque el puntaje total termine siendo alto: **un puntaje alto con una mentira
+verificable adentro es más peligroso que uno bajo**, porque nadie lo va a cuestionar sin leer la
+tabla completa.
+
+## Sugerencia concreta de mejora
+(una sola sugerencia, específica y accionable — no una lista genérica de buenas prácticas)
+```
+
+## Lo que este agente NO hace
+
+- No corrige estilo de redacción ni ortografía.
+- No opina sobre si el caso de negocio elegido es "bueno" o "interesante".
+- No le da puntos de más a un trabajo por reconocer fallas honestamente si esas fallas bajan el
+  puntaje de una dimensión puntual — la honestidad se premia en la dimensión de Proceso
+  documentado, no compensa huecos en las otras cuatro.
+- No negocia el puntaje si el alumno responde a la corrección pidiendo reconsideración: la
+  reconsideración solo procede si aparece evidencia nueva y verificable en el repo, no por
+  argumentación.
+</script>
+
+<script type="text/plain" id="rubricaText">
+# Rúbrica ejecutable — Trabajo final
+
+Esta es la versión ejecutable de la rúbrica oficial del trabajo final (publicada en el documento
+del trabajo final de la materia). Sirve para corregir **cualquier** trabajo final, sea cual sea el
+caso de negocio que haya elegido el alumno — no asume ningún dominio particular.
+
+Regla de lectura para el agente corrector: esta rúbrica no puntúa impresiones generales. Cada
+nivel exige una **evidencia puntual** (un archivo, un dato, una cita textual) que lo sostenga. Si
+no se puede señalar esa evidencia, no se puede dar ese nivel.
+
+## Cómo se puntúa cada dimensión
+
+Cada una de las 5 dimensiones se puntúa con uno de 4 niveles fijos — no hay puntajes
+intermedios. Esto es a propósito: son los que hacen que la rúbrica sea **determinística** (dos
+corridas sobre el mismo repo tienen que dar el mismo resultado).
+
+| Nivel | Qué significa en general |
+|---|---|
+| **Excelente** | Cumple todo lo pedido, con evidencia verificable en el repo. |
+| **Bueno** | Cumple lo esencial, pero con un hueco puntual y señalable. |
+| **Insuficiente** | Está insinuado o hecho a medias; no alcanza para confiar en el resultado. |
+| **Ausente** | No existe, o existe solo como afirmación sin nada que lo respalde. |
+
+---
+
+## Dimensión 1 · Sistema completo y funcionando — 30 puntos
+
+Evalúa si hay un agente de verdad (objetivo, contrato, herramienta, salida, supervisión) y no un
+prompt suelto.
+
+| Nivel | Puntos | Evidencia que lo exige |
+|---|---|---|
+| Excelente | **30** | Objetivo del agente escrito en una frase clara · `system_prompt.md` y `user_prompt.md` presentes y completos (identidad, tarea, reglas, formato de salida) · al menos una herramienta o conector real, y se lo ve **usado de verdad** en las corridas (no solo nombrado) · las 3 corridas devuelven la salida en el mismo formato estructurado · supervisión humana definida con niveles L0–L4 (qué hace solo el agente, qué revisa una persona, quién firma). |
+| Bueno | **21** | Falta o está débil **uno solo** de los puntos anteriores — ej. la herramienta se menciona en el prompt pero ninguna corrida muestra su uso; o la supervisión está descripta en una frase genérica sin niveles claros. |
+| Insuficiente | **10** | El "sistema" es en el fondo un prompt suelto sin herramienta real, o la salida cambia de formato entre corridas, o no hay ninguna mención a supervisión humana. |
+| Ausente | **0** | No hay `system_prompt.md`/`user_prompt.md` reconocibles, o las corridas no corresponden al contrato descripto. |
+
+**Ejemplo de nivel alto:** el prompt dice "usá la planilla `tickets.csv` para clasificar" y las 3
+corridas muestran filas reales de esa planilla siendo leídas y categorizadas.
+**Ejemplo de nivel bajo:** el README dice "se conecta a la casilla de mail" pero ninguna corrida
+muestra un mail de verdad — solo texto tipeado a mano en el prompt.
+
+## Dimensión 2 · Proceso documentado — 25 puntos
+
+Evalúa si `DECISIONES.md` (o equivalente) cuenta una historia real de construcción, no un trámite.
+
+| Nivel | Puntos | Evidencia que lo exige |
+|---|---|---|
+| Excelente | **25** | Al menos 2 iteraciones concretas narradas (qué se probó, qué falló textualmente, qué se cambió) **y** al menos una falla real reconocida con honestidad (no solo éxitos). |
+| Bueno | **17** | Hay iteraciones narradas pero son genéricas ("mejoré el prompt varias veces") sin mostrar el antes/después real, o no hay ninguna falla reconocida. |
+| Insuficiente | **8** | `DECISIONES.md` existe pero son 1-2 líneas sin sustancia verificable. |
+| Ausente | **0** | No existe `DECISIONES.md` o está vacío. |
+
+**Aclaración sobre "(o equivalente)":** esta frase del encabezado se refiere solo a variantes
+razonables del nombre del mismo archivo (ej. `decisiones.md` en minúscula), no a que el contenido
+pueda estar en otro archivo distinto, como el `README.md`. La consigna del trabajo final es
+explícita: *"Sin excepciones de formato: el agente que te corrige no improvisa."* Por lo tanto, si
+la historia del proceso está bien contada pero vive en el `README.md` (o en cualquier archivo que
+no sea `DECISIONES.md`) y no existe un `DECISIONES.md` dedicado en la raíz del repo, esta dimensión
+se puntúa como **Ausente**, aunque el contenido narrado sea de buena calidad. El criterio es a
+propósito estricto: no premia dónde el alumno decidió poner cada cosa, premia que haya seguido la
+estructura pedida.
+
+**Ejemplo de nivel alto:** "la primera versión del prompt devolvía el JSON con comillas simples y
+rompía el parser; se lo pedí explícito en el prompt y a partir de la corrida 2 se resolvió — ver
+`corridas/corrida_1.md` vs `corrida_2.md`."
+**Ejemplo de nivel bajo:** "iteré el prompt varias veces hasta que funcionó bien."
+
+## Dimensión 3 · Formato y reproducibilidad — 15 puntos
+
+Evalúa si el repo respeta la estructura obligatoria y si un tercero puede reconstruir qué pasó.
+
+| Nivel | Puntos | Evidencia que lo exige |
+|---|---|---|
+| Excelente | **15** | Existen `README.md`, `prompts/`, `corridas/`, `DECISIONES.md` exactamente como pide la consigna · hay **3 corridas**, cada una con entrada, salida y fecha, reconstruibles sin adivinar nada. |
+| Bueno | **10** | La estructura está pero con **un solo** hueco menor: falta la fecha en alguna corrida, o hay solo 2 corridas en vez de 3 — no ambas cosas a la vez. |
+| Insuficiente | **5** | Falta alguna carpeta obligatoria, las corridas no muestran entrada y salida completas, **o se combinan dos o más huecos menores de la lista de "Bueno" al mismo tiempo** (ej. faltan corridas y además a las que hay les falta la fecha). Un hueco aislado es un descuido; varios huecos juntos ya son un problema de reproducibilidad real. |
+| Ausente | **0** | El repo no respeta la estructura obligatoria y no se puede navegar de forma predecible. |
+
+## Dimensión 4 · Análisis económico — 15 puntos
+
+Evalúa si hay números reales de costo, no una mención de que "es barato".
+
+| Nivel | Puntos | Evidencia que lo exige |
+|---|---|---|
+| Excelente | **15** | Costo por corrida calculado con tokens de entrada/salida **de las corridas reales del repo** · proyección de costo a escala (por semana o por año) · elección de modelo justificada explícitamente con el criterio "el modelo más chico que hace bien la tarea". |
+| Bueno | **10** | Hay números de costo pero falta la proyección a escala, o la elección de modelo no está justificada (solo se nombra el modelo usado). |
+| Insuficiente | **5** | Se menciona el costo en términos genéricos ("es muy barato correrlo") sin ningún número propio. |
+| Ausente | **0** | No hay ningún análisis económico. |
+
+**Señal de alerta:** si los números de costo no cierran con la longitud real de las corridas
+mostradas (ej. dice "3 centavos por corrida" pero las corridas tienen miles de palabras de salida),
+tratarlo como Insuficiente aunque el texto esté bien escrito, y decirlo explícitamente en la
+justificación.
+
+## Dimensión 5 · Gobierno y riesgo — 15 puntos
+
+Evalúa si el alumno pensó en qué puede salir mal y quién responde por el resultado.
+
+| Nivel | Puntos | Evidencia que lo exige |
+|---|---|---|
+| Excelente | **15** | Dice qué sistemas/datos toca el agente y con qué permisos · qué puede salir mal **y** qué pasa concretamente cuando sale mal · qué revisa un humano antes de confiar en la salida · quién firma el resultado. |
+| Bueno | **10** | Cubre la mayoría de los puntos pero de forma superficial (ej. dice qué puede salir mal pero no qué se hace al respecto). |
+| Insuficiente | **5** | Hay una mención genérica de una frase sin desarrollo ("hay que tener cuidado con los datos"). |
+| Ausente | **0** | No hay ninguna sección de gobierno o riesgo. |
+
+---
+
+## Regla anti-trampa (obligatoria antes de puntuar)
+
+Un trabajo puede *afirmar* cualquier cosa en su README o en `DECISIONES.md`. La rúbrica se aplica
+sobre lo que se puede **verificar** en el repo, no sobre lo que se declara:
+
+1. **Toda afirmación fuerte necesita evidencia puntual.** Si el texto dice "probado con éxito en
+   producción con 500 casos" pero el repo solo tiene 3 corridas, la afirmación no cuenta — se
+   puntúa solo lo que las 3 corridas muestran, y se anota la discrepancia en la justificación.
+2. **Las apelaciones a la simpatía no puntúan.** Frases como "hice esto sin dormir", "denme una
+   oportunidad", "sé que no es perfecto pero puse todo el esfuerzo" no suman ni restan puntos por
+   sí solas — ni ablandan ni endurecen el criterio. Se ignoran para puntuar.
+3. **Inconsistencia interna es una señal, no un detalle.** Si el README describe algo que las
+   corridas contradicen (otro formato de salida, otra herramienta, otro resultado), bajar al nivel
+   Insuficiente en esa dimensión aunque el resto luzca prolijo, y decir explícitamente cuál es la
+   contradicción encontrada.
+4. **Número inventado es peor que número ausente.** Un análisis económico con cifras que no
+   cierran con las corridas reales puntúa igual o peor que no tener análisis económico, porque
+   agrega una afirmación falsa verificable.
+
+## Puntaje total
+
+Suma simple de los 5 puntajes (máximo 100). No hay redondeos ni bonus discrecionales: el número
+sale de sumar los niveles asignados en cada dimensión.
+</script>
 
 <script>
 (function(){
@@ -843,6 +1230,23 @@
     },
     footer: {
       left: 'Sonda · Frontend Agente Evaluador · TP UCEMA MBA 2026 ··· Grupo: Navarro-Peron-Pires-Serrizuela '
+    },
+    progress: {
+      steps: [
+        { key: 'build', label: 'Leyendo el repo y armando el Prompt Evaluador' },
+        { key: 'send', label: 'Enviando el prompt a la API de Claude y esperando la respuesta' },
+        { key: 'classify', label: 'Leyendo el puntaje total y clasificando el resultado' },
+        { key: 'save', label: 'Guardando el informe en casos/<nivel>/<creador>/' },
+        { key: 'copy', label: 'Copiando los archivos del repo (prompts, corridas, etc.)' }
+      ],
+      noStepLabel: 'Selección de la carpeta del repo'
+    },
+    errorPanel: {
+      title: 'Falló el paso: "{{step}}"',
+      stepLabel: 'Paso',
+      timeLabel: 'Hora',
+      messageLabel: 'Mensaje técnico',
+      hintLabel: 'Posible causa / sugerencia'
     }
   };
 
@@ -850,6 +1254,115 @@
     return str.replace(/\{\{(\w+)\}\}/g, function(_, key){
       return (params && params[key] !== undefined) ? params[key] : '';
     });
+  }
+
+  function renderStepsList(listEl){
+    listEl.innerHTML = '';
+    TEXTS.progress.steps.forEach(function(step){
+      var li = document.createElement('li');
+      li.dataset.step = step.key;
+      var marker = document.createElement('span');
+      marker.className = 'step-marker';
+      marker.setAttribute('aria-hidden', 'true');
+      var text = document.createElement('span');
+      text.textContent = step.label;
+      li.appendChild(marker);
+      li.appendChild(text);
+      listEl.appendChild(li);
+    });
+  }
+
+  function makeStepTracker(listEl){
+    var currentKey = null;
+    function items(){ return listEl.querySelectorAll('li'); }
+    return {
+      show: function(){ listEl.hidden = false; },
+      hide: function(){ listEl.hidden = true; },
+      reset: function(){
+        currentKey = null;
+        items().forEach(function(li){ li.classList.remove('is-active', 'is-done', 'is-error'); });
+      },
+      activate: function(key){
+        currentKey = key;
+        var found = false;
+        items().forEach(function(li){
+          if (li.dataset.step === key) { li.classList.remove('is-done', 'is-error'); li.classList.add('is-active'); found = true; }
+          else if (!found) { li.classList.remove('is-active', 'is-error'); li.classList.add('is-done'); }
+          else { li.classList.remove('is-active', 'is-done', 'is-error'); }
+        });
+      },
+      finishAll: function(){
+        items().forEach(function(li){ li.classList.remove('is-active', 'is-error'); li.classList.add('is-done'); });
+      },
+      errorAtCurrent: function(){
+        items().forEach(function(li){
+          if (li.dataset.step === currentKey) { li.classList.remove('is-active', 'is-done'); li.classList.add('is-error'); }
+        });
+      },
+      getCurrent: function(){ return currentKey; }
+    };
+  }
+
+  function stepLabelFor(key){
+    var found = TEXTS.progress.steps.filter(function(s){ return s.key === key; })[0];
+    return found ? found.label : TEXTS.progress.noStepLabel;
+  }
+
+  function hintForError(err){
+    var msg = (err && err.message) || String(err);
+    if ((err && err.name === 'AbortError') || /user aborted|user activation|cancel(l)?ed/i.test(msg)) {
+      return 'Cancelaste el diálogo de selección de carpeta, o el navegador lo cerró sin que eligieras nada. Volvé a presionar el botón e intentá de nuevo, eligiendo la carpeta raíz del repo (la que contiene "casos/").';
+    }
+    if (/no tiene el formato de un repo de GitHub/i.test(msg)) {
+      return 'Pegá la URL completa del repositorio, con este formato: https://github.com/usuario/nombre-del-repo';
+    }
+    if (/NotAllowedError|permission/i.test(msg)) {
+      return 'El navegador no tiene (o perdió) el permiso de escritura sobre la carpeta elegida. Volvé a intentarlo — te va a pedir el permiso de nuevo.';
+    }
+    if (/GitHub API 404/i.test(msg)) {
+      return 'El repo no existe, es privado, o la URL está mal escrita. Verificá que sea público y tenga el formato https://github.com/usuario/repo.';
+    }
+    if (/GitHub API 403/i.test(msg)) {
+      return 'Se alcanzó el límite de solicitudes sin autenticar de la API de GitHub (60 por hora por IP). Esperá una hora o probá más tarde.';
+    }
+    if (/GitHub API/i.test(msg)) {
+      return 'La API de GitHub devolvió un error al leer el repo. Revisá el mensaje técnico de arriba para el detalle exacto.';
+    }
+    if (/API de Anthropic \(401\)/i.test(msg) || /invalid x-api-key|authentication/i.test(msg)) {
+      return 'La API Key de Claude parece inválida, vencida, o no tiene acceso a este Workspace. Verificala en la Consola de Anthropic (Settings → API Keys).';
+    }
+    if (/API de Anthropic \(400\)/i.test(msg) && /workspace/i.test(msg)) {
+      return 'Falta o es inválido el Workspace ID. Buscalo en la Consola de Anthropic (Settings → Workspaces); empieza con "wrkspc_".';
+    }
+    if (/API de Anthropic \(429\)/i.test(msg) || /rate.?limit/i.test(msg)) {
+      return 'Se alcanzó el límite de uso (rate limit) de la API de Anthropic. Esperá unos minutos y reintentá, o revisá tu plan y cuota en la Consola.';
+    }
+    if (/API de Anthropic \(5\d\d\)/i.test(msg)) {
+      return 'La API de Anthropic tuvo un problema momentáneo de su lado (error 5xx). Reintentá en unos segundos.';
+    }
+    if (/API de Anthropic/i.test(msg)) {
+      return 'La API de Anthropic rechazó la solicitud. Revisá el mensaje técnico de arriba para el motivo exacto.';
+    }
+    if (/No encontré la línea "Puntaje total/i.test(msg)) {
+      return 'La respuesta de Claude no siguió el formato exacto pedido en system_prompt.md, así que no se pudo clasificar ni guardar nada. Revisá el resultado manualmente — puede deberse a un límite corto de tokens de salida (max_tokens) o a que el modelo se desvió del formato pedido.';
+    }
+    if (/Failed to fetch|NetworkError|TypeError/i.test(msg)) {
+      return 'No se pudo completar la conexión de red. Revisá tu conexión a internet, un firewall/proxy que esté bloqueando la solicitud, o una extensión del navegador (ej. bloqueador de anuncios) interfiriendo.';
+    }
+    return 'Revisá el mensaje técnico de arriba para más detalle. Si el problema persiste, copiá este detalle para reportarlo.';
+  }
+
+  function showErrorPanel(prefix, stepKey, err){
+    var label = stepKey ? stepLabelFor(stepKey) : TEXTS.progress.noStepLabel;
+    document.getElementById(prefix + '-error-title').textContent = fill(TEXTS.errorPanel.title, { step: label });
+    document.getElementById(prefix + '-error-step').textContent = label;
+    document.getElementById(prefix + '-error-time').textContent = new Date().toLocaleString();
+    document.getElementById(prefix + '-error-message').textContent = (err && err.message) || String(err);
+    document.getElementById(prefix + '-error-hint').textContent = hintForError(err);
+    document.getElementById(prefix + '-error').hidden = false;
+  }
+  function hideErrorPanel(prefix){
+    document.getElementById(prefix + '-error').hidden = true;
   }
 
   function applyTexts(){
@@ -912,6 +1425,16 @@
     document.getElementById('labelBModel').textContent = TEXTS.panelB.labelModel;
     document.getElementById('btn-b').textContent = TEXTS.panelB.button;
     document.getElementById('bResultLabel').textContent = TEXTS.panelB.resultLabel;
+
+    renderStepsList(document.getElementById('aa-steps'));
+    renderStepsList(document.getElementById('b-steps'));
+
+    ['aa', 'b'].forEach(function(prefix){
+      document.getElementById(prefix + 'ErrStepLabel').textContent = TEXTS.errorPanel.stepLabel;
+      document.getElementById(prefix + 'ErrTimeLabel').textContent = TEXTS.errorPanel.timeLabel;
+      document.getElementById(prefix + 'ErrMsgLabel').textContent = TEXTS.errorPanel.messageLabel;
+      document.getElementById(prefix + 'ErrHintLabel').textContent = TEXTS.errorPanel.hintLabel;
+    });
   }
 
   var state = { path1: null, path2: null };
@@ -1009,6 +1532,13 @@
     document.getElementById('aa-output').value = '';
     document.getElementById('b-result').hidden = true;
     document.getElementById('b-output').value = '';
+    ['aa-steps','b-steps'].forEach(function(id){
+      var listEl = document.getElementById(id);
+      listEl.hidden = true;
+      listEl.querySelectorAll('li').forEach(function(li){ li.classList.remove('is-active','is-done','is-error'); });
+    });
+    document.getElementById('aa-error').hidden = true;
+    document.getElementById('b-error').hidden = true;
     csvState = { ok: false, rows: [] };
     render();
   }
@@ -1038,16 +1568,22 @@
   var MAX_TOTAL_CHARS = 300000;
   var EXTRA_ROOT_FILES = ['ANALISIS_ECONOMICO.md', 'DECISIONES.md', 'GOBIERNO.md', 'README.md'];
 
-  var cachedSources = null;
+  function storageGet(key){
+    try { return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function storageSet(key, value){
+    try { localStorage.setItem(key, value); } catch(e){ /* no persiste, no pasa nada */ }
+  }
+  function parseRepoUrl(url){
+    var m = url.trim().replace(/\/+$/, '').match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?(?:\/.*)?$/i);
+    if (!m) return null;
+    return { owner: m[1], repo: m[2] };
+  }
+
   function loadPromptSources(){
-    if (cachedSources) return Promise.resolve(cachedSources);
-    return Promise.all([
-      fetch('./system_prompt.md').then(function(r){ if(!r.ok) throw new Error('No pude leer agente/system_prompt.md (' + r.status + ') — ¿estás sirviendo la página por http://localhost desde la raíz del repo?'); return r.text(); }),
-      fetch('../rubrica.md').then(function(r){ if(!r.ok) throw new Error('No pude leer rubrica.md (' + r.status + ')'); return r.text(); }),
-    ]).then(function(res){
-      cachedSources = { systemPrompt: res[0].trim(), rubrica: res[1].trim() };
-      return cachedSources;
-    });
+    var systemPrompt = document.getElementById('systemPromptText').textContent.trim();
+    var rubrica = document.getElementById('rubricaText').textContent.trim();
+    return Promise.resolve({ systemPrompt: systemPrompt, rubrica: rubrica });
   }
 
   async function githubJson(url){
@@ -1247,12 +1783,23 @@
 
   /* ---------- pipeline por repo, compartido entre 1A-A y 1B ---------- */
   async function evaluateAndFile(opts){
+    var onStep = opts.onStep || function(){};
+    if (opts.onStatus) opts.onStatus('Elegí la carpeta raíz del repo del agente evaluador (la que contiene "casos/") — el navegador solo va a pedirlo una vez por sesión.');
     var rootDir = await getRepoRootHandle();
+
+    onStep('build');
     var built = await buildFullPrompt(opts.owner, opts.repo, opts.onStatus);
+
+    onStep('send');
     if (opts.onStatus) opts.onStatus('Llamando a la API de Anthropic (' + opts.model + ')...');
     var result = await callClaudeAPI(built.prompt, opts.apiKey, opts.model, opts.workspaceId);
+
+    onStep('classify');
     var nivel = classifyResult(result.text);
     if (!nivel) throw new Error('No encontré la línea "Puntaje total: X/100" en la respuesta — no se guardó nada, revisá el informe manualmente.');
+    if (opts.onStatus) opts.onStatus('Puntaje leído — nivel clasificado: ' + nivel + '.');
+
+    onStep('save');
     if (opts.onStatus) opts.onStatus('Guardando en casos/' + nivel + '/...');
     var casosDir = await rootDir.getDirectoryHandle('casos');
     var nivelDir = await ensureDir(casosDir, nivel);
@@ -1260,7 +1807,10 @@
     var destDir = await ensureDir(nivelDir, safeName);
     var fullReport = result.text + formatUsageBlock(result.usage, opts.model);
     await writeFile(destDir, 'Correccion_de_' + safeName + '.md', fullReport);
+
+    onStep('copy');
     await copyExtras(opts.owner, opts.repo, built.branch, built.blobs, destDir, opts.onStatus);
+
     return { nivel: nivel, usage: result.usage, text: fullReport, folder: 'casos/' + nivel + '/' + safeName + '/' };
   }
 
@@ -1316,6 +1866,7 @@
   var aaStatus = document.getElementById('aa-status');
   var aaResult = document.getElementById('aa-result');
   var aaOutput = document.getElementById('aa-output');
+  var aaSteps = makeStepTracker(document.getElementById('aa-steps'));
 
   aaModel.value = storageGet('sonda_model') || 'claude-opus-5';
   aaModel.addEventListener('change', function(){ storageSet('sonda_model', aaModel.value); });
@@ -1334,26 +1885,32 @@
   [aaUrl, aaName, aaKey, aaWs].forEach(function(i){ i.addEventListener('input', checkAA); });
   btnAA.addEventListener('click', async function(){
     var original = TEXTS.panelAA.button;
+    hideErrorPanel('aa');
     var parsed = parseRepoUrl(aaUrl.value);
-    if (!parsed) { aaStatus.textContent = 'No pude interpretar esa URL como repo de GitHub.'; return; }
+    if (!parsed) { showErrorPanel('aa', null, new Error('La URL ingresada no tiene el formato de un repo de GitHub.')); return; }
 
     btnAA.textContent = TEXTS.common.buttonBusy;
     btnAA.disabled = true;
     aaResult.hidden = true;
+    aaSteps.reset();
+    aaSteps.show();
     try {
       var res = await evaluateAndFile({
         owner: parsed.owner, repo: parsed.repo,
         creador: aaName.value.trim(), apiKey: aaKey.value.trim(),
         model: aaModel.value, workspaceId: aaWs.value.trim(),
         onStatus: function(msg){ aaStatus.textContent = msg; },
+        onStep: function(key){ aaSteps.activate(key); },
       });
+      aaSteps.finishAll();
       aaStatus.textContent = 'Listo — nivel ' + res.nivel + ', guardado en ' + res.folder;
       aaOutput.value = res.text;
       aaResult.hidden = false;
       btnAA.textContent = TEXTS.common.buttonDone;
       setTimeout(function(){ btnAA.textContent = original; checkAA(); }, 1600);
     } catch (err) {
-      aaStatus.textContent = 'Error: ' + err.message;
+      aaSteps.errorAtCurrent();
+      showErrorPanel('aa', aaSteps.getCurrent(), err);
       btnAA.textContent = original;
       checkAA();
     }
@@ -1433,6 +1990,7 @@
   var bStatus = document.getElementById('b-status');
   var bResult = document.getElementById('b-result');
   var bOutput = document.getElementById('b-output');
+  var bSteps = makeStepTracker(document.getElementById('b-steps'));
   var csvState = { ok: false, rows: [] };
 
   bModel.value = storageGet('sonda_model') || 'claude-opus-5';
@@ -1508,10 +2066,13 @@
     btnB.textContent = TEXTS.common.buttonBusy;
     btnB.disabled = true;
     bResult.hidden = true;
+    hideErrorPanel('b');
 
     var results = [];
+    bSteps.show();
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
+      bSteps.reset();
       bStatus.textContent = 'Procesando ' + (i + 1) + '/' + rows.length + ': ' + row.creador + '...';
       var parsed = parseRepoUrl(row.url);
       if (!parsed) {
@@ -1524,9 +2085,13 @@
           creador: row.creador, apiKey: bKey.value.trim(),
           model: bModel.value, workspaceId: bWs.value.trim(),
           onStatus: function(msg){ bStatus.textContent = 'Procesando ' + (i + 1) + '/' + rows.length + ': ' + row.creador + ' — ' + msg; },
+          onStep: function(key){ bSteps.activate(key); },
         });
+        bSteps.finishAll();
         results.push({ creador: row.creador, url: row.url, ok: true, nivel: res.nivel, folder: res.folder });
       } catch (err) {
+        bSteps.errorAtCurrent();
+        showErrorPanel('b', bSteps.getCurrent(), err);
         results.push({ creador: row.creador, url: row.url, ok: false, error: err.message });
       }
     }
