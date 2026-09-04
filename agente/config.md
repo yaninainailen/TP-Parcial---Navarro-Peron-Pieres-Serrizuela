@@ -28,16 +28,20 @@ corridas distintas, lo cual invalida la corrección.
 No se necesita acceso de escritura en ningún momento — el agente corrector nunca modifica el
 repo que evalúa.
 
-`agente/corrector_local.html` implementa esto de dos formas, elegibles en la misma página:
+`agente/sonda_v0.2.html` implementa esto, con tres caminos elegibles paso a paso en la misma
+página:
 
-- **Automática ("Evaluar con Claude"):** la página arma el prompt (system prompt + rúbrica +
-  contenido del repo leído vía la API pública de GitHub) y llama directo a
-  `api.anthropic.com/v1/messages` desde el navegador, con la API key y el modelo que elija quien
-  corre la herramienta. Requiere una API key propia de Anthropic (consume crédito pago) y muestra
-  el uso de tokens (`usage.input_tokens`/`usage.output_tokens`) y un costo estimado de esa corrida
-  al pie del informe.
-- **Manual ("Preparar prompt"):** como antes — arma el mismo prompt y lo deja listo para copiar a
-  mano en cualquier chat de IA, sin key ni costo.
+1. **Un repo con API ("Con API de Claude"):** la página arma el prompt (system prompt + rúbrica +
+   contenido del repo leído vía la API pública de GitHub) y llama directo a
+   `api.anthropic.com/v1/messages` desde el navegador, con la API key, el Workspace ID y el modelo
+   que elija quien corre la herramienta. Requiere una API key propia de Anthropic (consume crédito
+   pago), guarda el resultado automáticamente en disco (ver más abajo) y muestra el uso de tokens
+   (`usage.input_tokens`/`usage.output_tokens`) y un costo estimado de esa corrida al pie del
+   informe.
+2. **Un repo sin API ("Prompt Validador"):** arma el mismo prompt y lo deja listo para copiar a
+   mano en cualquier chat de IA, sin key, sin costo y sin guardado en disco.
+3. **Una lista de repos por CSV:** el mismo camino con API pero procesando muchas filas
+   (`url,creador`) una por una.
 
 La API key se guarda solo en `localStorage` del navegador de quien la usa, nunca en el repo ni en
 ningún servidor propio del grupo.
@@ -48,21 +52,14 @@ varios workspaces de la cuenta de Anthropic), la API exige además el header
 campo aparte para pegarlo (Console → Settings → Workspaces, empieza con `wrkspc_`). Con una key de
 workspace normal (no identity-linked) ese campo se puede dejar vacío.
 
-### `agente/sonda_v0.2.html` — versión con guardado automático y modo lote
+### Guardado automático en disco
 
-Sonda hace lo mismo que `corrector_local.html` (lee el repo, arma el prompt, llama a la API) pero
-agrega dos cosas que ese archivo no tiene:
-
-1. **Tres caminos, elegibles paso a paso:** un repo con API (guarda el resultado en disco), un repo
-   sin API (arma el prompt para copiar a mano, igual que el modo manual de `corrector_local.html`),
-   o una lista de repos por CSV (`url,creador` por fila) procesados uno por uno con la misma API.
-2. **Guardado automático en disco.** Cuando se usa la API (los dos primeros caminos), al terminar
-   cada corrección Sonda: (a) clasifica el resultado — `tramposo` si el informe trae la alerta
-   obligatoria `⚠️ Posible caso de trabajo tramposo detectado`; si no, `excelente` con
-   `Puntaje total >= 70`, `flojo` por debajo de ese número — y (b) crea
-   `casos/<nivel>/<Creador del repo>/` con `Correccion_de_<Creador>.md` (el informe completo + uso
-   de tokens) más una copia de `corridas/`, `prompts/`, `ANALISIS_ECONOMICO.md`, `DECISIONES.md`,
-   `GOBIERNO.md` y `README.md` del repo evaluado.
+Cuando se usa la API (caminos 1 y 3), al terminar cada corrección Sonda: (a) clasifica el
+resultado — `tramposo` si el informe trae la alerta obligatoria `⚠️ Posible caso de trabajo
+tramposo detectado`; si no, `excelente` con `Puntaje total >= 70`, `flojo` por debajo de ese
+número — y (b) crea `casos/<nivel>/<Creador del repo>/` con `Correccion_de_<Creador>.md` (el
+informe completo + uso de tokens) más una copia de `corridas/`, `prompts/`,
+`ANALISIS_ECONOMICO.md`, `DECISIONES.md`, `GOBIERNO.md` y `README.md` del repo evaluado.
 
 **Por qué necesita un servidor local y no alcanza con abrir el archivo con doble clic:** escribir
 carpetas y archivos en disco desde el navegador solo es posible con la File System Access API

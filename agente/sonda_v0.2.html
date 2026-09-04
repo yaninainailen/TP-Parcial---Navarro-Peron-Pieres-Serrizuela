@@ -1346,6 +1346,9 @@ sale de sumar los niveles asignados en cada dimensión.
     if (/No encontré la línea "Puntaje total/i.test(msg)) {
       return 'La respuesta de Claude no siguió el formato exacto pedido en system_prompt.md, así que no se pudo clasificar ni guardar nada. Revisá el resultado manualmente — puede deberse a un límite corto de tokens de salida (max_tokens) o a que el modelo se desvió del formato pedido.';
     }
+    if (/se interrumpió/i.test(msg)) {
+      return 'La conexión con la API de Anthropic se cortó a mitad de la generación de la respuesta — típico de un proxy/firewall corporativo (ej. Zscaler) que corta conexiones que considera inactivas. La solicitud ahora se envía en modo streaming (llegan datos en flujo continuo), lo que debería evitar este corte en la mayoría de los casos, pero pueden seguir ocurriendo cortes puntuales. Reintentá; si se repite seguido, probá desde una red sin proxy de inspección SSL o pedile a IT una excepción para api.anthropic.com.';
+    }
     if (/Failed to fetch|NetworkError|TypeError/i.test(msg)) {
       return 'No se pudo completar la conexión de red. Revisá tu conexión a internet, un firewall/proxy que esté bloqueando la solicitud, o una extensión del navegador (ej. bloqueador de anuncios) interfiriendo.';
     }
@@ -1551,8 +1554,8 @@ sale de sumar los niveles asignados en cada dimensión.
   /* ============================================================
      LÓGICA DEL EVALUADOR — leer repos de GitHub, armar el prompt,
      llamar a la API de Anthropic, clasificar y guardar en disco.
-     Portado de agente/corrector_local.html; ver interacciones/registro.md
-     (sección 11) para el porqué de cada decisión.
+     Ver interacciones/registro.md (sección 11 en adelante) para el
+     porqué de cada decisión.
      ============================================================ */
 
   var MODEL_PRICING = {
@@ -1648,7 +1651,7 @@ sale de sumar los niveles asignados en cada dimensión.
     return { prompt: prompt, branch: treeInfo.branch, blobs: treeInfo.blobs };
   }
 
-  async function callClaudeAPI(prompt, apiKey, model, workspaceId){
+  async function callClaudeAPI(prompt, apiKey, model, workspaceId, onStatus){
     var headers = {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
@@ -1656,20 +1659,111 @@ sale de sumar los niveles asignados en cada dimensión.
       'anthropic-dangerous-direct-browser-access': 'true',
     };
     if (workspaceId) headers['anthropic-workspace-id'] = workspaceId;
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: headers,
-      body: JSON.stringify({ model: model, max_tokens: 8000, messages: [{ role: 'user', content: prompt }] }),
-    });
-    var data = await res.json().catch(function(){ return null; });
+    var body = JSON.stringify({ model: model, max_tokens: 40000, stream: true, messages: [{ role: 'user', content: prompt }] });
+
+    var promptChars = prompt.length;
+    var estTokens = Math.round(promptChars / 4);
+    var kb = (new Blob([body]).size / 1024).toFixed(1);
+    if (onStatus) onStatus('Armando la solicitud — ' + promptChars.toLocaleString('es-AR') + ' caracteres (~' + estTokens.toLocaleString('es-AR') + ' tokens estimados, ' + kb + ' KB) para ' + model + '...');
+
+    var startTime = Date.now();
+    if (onStatus) onStatus('Enviando la solicitud a la API de Anthropic (' + model + ')...');
+
+    var res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: headers, body: body });
+    } catch (e) {
+      throw new Error('La conexión se interrumpió antes de recibir respuesta de la API de Anthropic: ' + ((e && e.message) || e));
+    }
+
     if (!res.ok) {
-      var msg = (data && data.error && data.error.message) || ('HTTP ' + res.status);
+      var errData = await res.json().catch(function(){ return null; });
+      var msg = (errData && errData.error && errData.error.message) || ('HTTP ' + res.status);
       if (res.status === 400 && /anthropic-workspace-id/i.test(msg)) {
         msg += ' — completá el Workspace ID (Console → Settings → Workspaces, empieza con wrkspc_).';
       }
       throw new Error('API de Anthropic (' + res.status + '): ' + msg);
     }
-    var text = (data.content || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('\n');
-    return { text: text, usage: data.usage || {} };
+
+    /* ---- lectura del stream SSE (sin librería): la API manda la respuesta en
+       eventos continuos a medida que se genera, en vez de un solo bloque al
+       final — esto evita que un proxy corporativo corte la conexión por
+       considerarla inactiva mientras Claude sigue procesando. ---- */
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder('utf-8');
+    var buffer = '';
+    var eventName = null;
+    var accText = '';
+    var usage = { input_tokens: 0, output_tokens: 0 };
+    var lastStatusAt = 0;
+
+    function emitStatus(){
+      if (!onStatus) return;
+      var now = Date.now();
+      if (now - lastStatusAt < 500) return;
+      lastStatusAt = now;
+      var secs = Math.round((now - startTime) / 1000);
+      onStatus('Generando el informe (' + model + ')... ' + accText.length.toLocaleString('es-AR') + ' caracteres recibidos, ' + secs + 's transcurridos');
+    }
+
+    function handleEvent(name, dataStr){
+      if (!dataStr) return;
+      var evt;
+      try { evt = JSON.parse(dataStr); } catch (e) { return; }
+      var type = name || evt.type;
+      if (type === 'ping' || type === 'content_block_start' || type === 'content_block_stop' || type === 'message_stop') return;
+      if (type === 'message_start') {
+        if (evt.message && evt.message.usage) usage.input_tokens = evt.message.usage.input_tokens || 0;
+        return;
+      }
+      if (type === 'content_block_delta') {
+        if (evt.delta && evt.delta.type === 'text_delta' && typeof evt.delta.text === 'string') {
+          accText += evt.delta.text;
+          emitStatus();
+        }
+        return;
+      }
+      if (type === 'message_delta') {
+        if (evt.usage && typeof evt.usage.output_tokens === 'number') usage.output_tokens = evt.usage.output_tokens;
+        return;
+      }
+      if (type === 'error') {
+        var errInfo = evt.error || {};
+        throw new Error('API de Anthropic (' + (errInfo.type || 'error') + '): ' + (errInfo.message || dataStr));
+      }
+    }
+
+    while (true) {
+      var chunk;
+      try {
+        chunk = await reader.read();
+      } catch (e) {
+        throw new Error('La conexión se interrumpió durante la generación de la respuesta (después de ' + accText.length.toLocaleString('es-AR') + ' caracteres recibidos): ' + ((e && e.message) || e));
+      }
+      if (chunk.done) {
+        if (buffer.indexOf('data: ') === 0) handleEvent(eventName, buffer.slice(6));
+        break;
+      }
+      buffer += decoder.decode(chunk.value, { stream: true });
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].replace(/\r$/, '');
+        if (line.indexOf('event: ') === 0) {
+          eventName = line.slice(7).trim();
+        } else if (line.indexOf('data: ') === 0) {
+          handleEvent(eventName, line.slice(6));
+          eventName = null;
+        }
+      }
+    }
+
+    if (!accText) {
+      throw new Error('La conexión se interrumpió durante la generación de la respuesta (no llegó contenido) — probablemente un proxy/firewall cortó la conexión.');
+    }
+
+    if (onStatus) onStatus('Respuesta recibida — ' + (usage.output_tokens || 0).toLocaleString('es-AR') + ' tokens de salida. Procesando...');
+    return { text: accText, usage: usage };
   }
 
   function formatUsageBlock(usage, model){
@@ -1791,12 +1885,26 @@ sale de sumar los niveles asignados en cada dimensión.
     var built = await buildFullPrompt(opts.owner, opts.repo, opts.onStatus);
 
     onStep('send');
-    if (opts.onStatus) opts.onStatus('Llamando a la API de Anthropic (' + opts.model + ')...');
-    var result = await callClaudeAPI(built.prompt, opts.apiKey, opts.model, opts.workspaceId);
+    var result;
+    try {
+      result = await callClaudeAPI(built.prompt, opts.apiKey, opts.model, opts.workspaceId, opts.onStatus);
+    } catch (sendErr) {
+      if (/se interrumpió/i.test(sendErr.message)) {
+        if (opts.onStatus) opts.onStatus('Se perdió la conexión a mitad de la generación — reintentando...');
+        await new Promise(function(resolve){ setTimeout(resolve, 2000); });
+        result = await callClaudeAPI(built.prompt, opts.apiKey, opts.model, opts.workspaceId, opts.onStatus);
+      } else {
+        throw sendErr;
+      }
+    }
 
     onStep('classify');
     var nivel = classifyResult(result.text);
-    if (!nivel) throw new Error('No encontré la línea "Puntaje total: X/100" en la respuesta — no se guardó nada, revisá el informe manualmente.');
+    if (!nivel) {
+      var fmtErr = new Error('No encontré la línea "Puntaje total: X/100" en la respuesta — no se guardó nada, revisá el informe manualmente.');
+      fmtErr.rawText = result.text + formatUsageBlock(result.usage, opts.model);
+      throw fmtErr;
+    }
     if (opts.onStatus) opts.onStatus('Puntaje leído — nivel clasificado: ' + nivel + '.');
 
     onStep('save');
@@ -1911,6 +2019,10 @@ sale de sumar los niveles asignados en cada dimensión.
     } catch (err) {
       aaSteps.errorAtCurrent();
       showErrorPanel('aa', aaSteps.getCurrent(), err);
+      if (err.rawText) {
+        aaOutput.value = err.rawText;
+        aaResult.hidden = false;
+      }
       btnAA.textContent = original;
       checkAA();
     }
@@ -2092,7 +2204,7 @@ sale de sumar los niveles asignados en cada dimensión.
       } catch (err) {
         bSteps.errorAtCurrent();
         showErrorPanel('b', bSteps.getCurrent(), err);
-        results.push({ creador: row.creador, url: row.url, ok: false, error: err.message });
+        results.push({ creador: row.creador, url: row.url, ok: false, error: err.message, rawText: err.rawText });
       }
     }
 
@@ -2100,7 +2212,10 @@ sale de sumar los niveles asignados en cada dimensión.
     results.forEach(function(r){
       lines.push('| ' + r.creador + ' | ' + (r.ok ? r.nivel : '—') + ' | ' + (r.ok ? 'Guardado en ' + r.folder : 'Error: ' + r.error) + ' |');
     });
-    bOutput.value = lines.join('\n');
+    var rawSections = results.filter(function(r){ return r.rawText; }).map(function(r){
+      return '\n\n---\n\n### Respuesta cruda sin clasificar — ' + r.creador + '\n\n' + r.rawText;
+    });
+    bOutput.value = lines.join('\n') + rawSections.join('');
     bResult.hidden = false;
     var okCount = results.filter(function(r){ return r.ok; }).length;
     bStatus.textContent = 'Listo — ' + okCount + '/' + results.length + ' repos evaluados sin error.';

@@ -51,35 +51,35 @@ sobre los tres para calibrarlo contra el criterio del grupo.
 
 ## Cómo correr esto en la prueba de fuego (10/9)
 
-1. Alguien del grupo abre `agente/corrector_local.html` como archivo local en el navegador (no
-   hace falta servidor ni conexión más que a internet).
-2. Pega la URL del repo del compañero a evaluar.
-3. Dos caminos, según si hay una API key de Anthropic a mano:
-   - **Con key:** pegar la API key, elegir el modelo (por defecto Claude Opus 5; hay opciones más
-     baratas — Sonnet 5, Haiku 4.5 — en el mismo selector) y apretar "Evaluar con Claude". La
-     página llama directo a la API y muestra la corrección junto con el uso de tokens y el costo
-     estimado de esa corrida. Conviene tener la key ya cargada y probada *antes* de que arranque
-     la prueba, no en el momento.
-   - **Sin key:** apretar "Preparar prompt (manual)", copiar el resultado y pegarlo en un chat de
-     IA ya abierto de antemano (Claude o ChatGPT) — conviene tener esa pestaña lista de antes.
-4. Si la API de GitHub responde con error de rate-limit (límite de pedidos sin autenticar), esperar
-   unos minutos y reintentar, o probar desde otra red — no hay token de GitHub configurado a
-   propósito (decisión documentada en `interacciones/registro.md`), así que no hay forma de
-   saltear ese límite en el momento. Si en cambio falla la llamada a la API de Anthropic (key
-   inválida, sin crédito, rate-limit de la cuenta), el mensaje de error queda a la vista arriba del
-   resultado — el camino manual (paso 3, sin key) sigue funcionando como respaldo.
+La herramienta es `agente/sonda_v0.2.html`, con tres caminos elegibles paso a paso en la misma
+página (detalle completo en `agente/config.md`):
 
-### Modo avanzado: `agente/sonda_v0.2.html`
+1. **Un repo con API de Claude:** pegar la URL del repo, el nombre del creador, la API key de
+   Anthropic, el Workspace ID y elegir el modelo (por defecto Claude Opus 5; hay opciones más
+   baratas — Sonnet 5, Haiku 4.5 — en el mismo selector), y apretar "Analizar el repo". La página
+   llama directo a la API, muestra la corrección junto con el uso de tokens y el costo estimado de
+   esa corrida, y la guarda **automáticamente** en `casos/<nivel>/<Creador del repo>/` (informe +
+   copia de `corridas/`, `prompts/` y los 4 archivos de proceso del repo evaluado). Conviene tener
+   la key y el Workspace ID ya cargados y probados *antes* de que arranque la prueba, no en el
+   momento.
+2. **Un repo sin API ("Prompt Validador"):** sin key, pegar la URL, apretar "Crear Prompt
+   Validador", copiar el resultado y pegarlo en un chat de IA ya abierto de antemano (Claude o
+   ChatGPT) — conviene tener esa pestaña lista de antes. No guarda nada en disco.
+3. **Una lista de repos por CSV:** el mismo camino con API pero subiendo un CSV (`url,creador` por
+   fila) para procesar muchos repos uno por uno.
 
-Además de `corrector_local.html` hay una segunda herramienta, `agente/sonda_v0.2.html`, con la
-misma lógica de lectura del repo y llamada a la API, pero con tres caminos elegibles paso a paso
-(un repo con API, un repo sin API, o una lista de repos por CSV) y, cuando se usa la API, guardado
-**automático** del resultado en `casos/<nivel>/<Creador del repo>/` (informe + copia de
-`corridas/`, `prompts/` y los 4 archivos de proceso del repo evaluado) — ver el detalle completo en
-`agente/config.md`. Requiere servirla por `http://localhost` (ej. `python -m http.server` desde la
-raíz del repo) y usar Chrome o Edge, porque el guardado en disco depende de una API del navegador
-que no funciona abriendo el archivo con doble clic. Si no se quiere depender de eso, el camino
-simple de `corrector_local.html` sigue disponible y no cambió.
+Como el guardado automático en disco (camino 1 y 3) depende de una API del navegador que no
+funciona abriendo el archivo con doble clic, hay que servir la página por `http://localhost` (ej.
+`python -m http.server` desde la raíz del repo, y abrirla como
+`http://localhost:8000/agente/sonda_v0.2.html`) y usar Chrome o Edge. El camino 2 (sin API, sin
+guardado) sí funciona abriendo el archivo directo, en cualquier navegador.
+
+Si la API de GitHub responde con error de rate-limit (límite de pedidos sin autenticar), esperar
+unos minutos y reintentar, o probar desde otra red — no hay token de GitHub configurado a
+propósito (decisión documentada en `interacciones/registro.md`), así que no hay forma de saltear
+ese límite en el momento. Si en cambio falla la llamada a la API de Anthropic (key inválida, sin
+crédito, rate-limit de la cuenta), el mensaje de error queda a la vista arriba del resultado — el
+camino 2 (sin key) sigue funcionando como respaldo.
 
 ## Qué falta o qué falló
 
